@@ -20,11 +20,11 @@ function derivedSecret(purpose, env, bytes = 32) {
 export function applyBootSecrets(env = process.env) {
   if (!env.AUTH_SECRET || env.AUTH_SECRET.length < 16) {
     env.AUTH_SECRET = derivedSecret("auth-secret", env);
-    console.warn("[boot] AUTH_SECRET was missing. Using a Railway-service derived value. Set AUTH_SECRET in Variables to pin it.");
+    console.log("[boot] AUTH_SECRET was missing. Using a Railway-service derived value. Set AUTH_SECRET in Variables to pin it.");
   }
   if (!env.ENCRYPTION_KEY || env.ENCRYPTION_KEY.length < 32) {
     env.ENCRYPTION_KEY = derivedSecret("encryption-key", env);
-    console.warn("[boot] ENCRYPTION_KEY was missing. Using a Railway-service derived value. Set ENCRYPTION_KEY in Variables to pin it.");
+    console.log("[boot] ENCRYPTION_KEY was missing. Using a Railway-service derived value. Set ENCRYPTION_KEY in Variables to pin it.");
   }
   return env;
 }

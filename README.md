@@ -104,12 +104,12 @@ See `.env.example`. `ENCRYPTION_KEY` must be a 32-byte secret (64 hex chars reco
 
 ## Deploy on Railway
 
-Railway needs **PostgreSQL**. Do not rely on SQLite there — Railway disks are ephemeral and a redeploy would wipe the payment ledger.
+The service will boot without a database plugin (SQLite). Add **PostgreSQL** when you care about keeping the payment ledger across deploys — Railway disks are ephemeral, so SQLite is wiped on each redeploy.
 
 1. Push this branch to GitHub.
 2. In [Railway](https://railway.app) create a new project → **Deploy from GitHub repo**.
-3. Add a **PostgreSQL** plugin to the same project. Railway will inject `DATABASE_URL`.
-4. In the web service **Variables**, set at least a Postgres plugin so `DATABASE_URL` exists. These are optional but recommended:
+3. Optional but recommended: add a **PostgreSQL** plugin, then on this web service **Variables** add a reference to the plugin's `DATABASE_URL` (or `DATABASE_PRIVATE_URL`). Creating the plugin in the project is not enough — the web service must receive the URL.
+4. These Variables are optional but recommended:
 
 | Variable | Example |
 |---|---|
@@ -120,7 +120,7 @@ Railway needs **PostgreSQL**. Do not rely on SQLite there — Railway disks are 
 | `ADMIN_NAME` | `Treasury Admin` |
 | `NEXT_PUBLIC_APP_NAME` | `Panel Treasury` |
 
-Leave `DATABASE_URL` to the Postgres plugin. Do not paste a `file:` SQLite URL.
+If `DATABASE_URL` is missing, boot uses SQLite and keeps running. Prefer the Postgres plugin for real use.
 
 5. Settings that this repo already provides:
    - `railway.toml` start command: migrate → create admin if missing → `next start --hostname 0.0.0.0 --port $PORT`
@@ -129,6 +129,6 @@ Leave `DATABASE_URL` to the Postgres plugin. Do not paste a `file:` SQLite URL.
 6. Generate a public domain under **Settings → Networking → Generate Domain**.
 7. Open the domain and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` (or the generated password printed once in Deploy Logs as `[boot] Created ... with a generated password`).
 
-The first boot runs `prisma migrate deploy` against Postgres and creates the admin user only if that email does not already exist. Later deploys will not reset the password.
+The first boot runs `prisma migrate deploy` and creates the admin user only if that email does not already exist. Later deploys will not reset the password.
 
 If a Railway **Build image** step fails, check that the service builder is Nixpacks (this repo sets `builder = "NIXPACKS"`) and that install is not omitting devDependencies. The build needs TypeScript and Tailwind from `devDependencies`.
