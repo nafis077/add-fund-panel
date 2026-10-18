@@ -1,11 +1,10 @@
 "use client";
 
 import { FormEvent, Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState("admin@localhost");
   const [password, setPassword] = useState("");
@@ -18,17 +17,17 @@ function LoginForm() {
     setError("");
     const response = await fetch("/api/auth/login", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
     const payload = (await response.json()) as { error?: string };
-    setBusy(false);
     if (!response.ok) {
+      setBusy(false);
       setError(payload.error ?? "Unable to sign in");
       return;
     }
-    router.push(params.get("next") || "/");
-    router.refresh();
+    window.location.assign(params.get("next") || "/");
   }
 
   return (

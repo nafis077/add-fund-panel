@@ -2,9 +2,10 @@ import { clearSessionCookie, getSession } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import { clientIp, json } from "@/lib/http";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   const session = await getSession();
-  await clearSessionCookie();
   if (session) {
     await writeAudit({
       actorId: session.id,
@@ -14,5 +15,5 @@ export async function POST(request: Request) {
       ipAddress: clientIp(request),
     });
   }
-  return json({ ok: true });
+  return clearSessionCookie(json({ ok: true }), request);
 }

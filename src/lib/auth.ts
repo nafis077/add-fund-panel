@@ -1,9 +1,11 @@
 import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import type { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AuthError, hasPermission } from "@/lib/permissions";
-import { SESSION_COOKIE, SESSION_HOURS } from "@/lib/auth-constants";
+import { SESSION_COOKIE } from "@/lib/auth-constants";
+import { sessionCookieOptions } from "@/lib/session-cookie";
 import type { Permission, UserRole } from "@/types/domain";
 
 export type SessionUser = {
@@ -76,19 +78,17 @@ export async function requirePermission(permission: Permission): Promise<Session
   return session;
 }
 
-export async function setSessionCookie(user: SessionUser): Promise<void> {
+export async function attachSessionCookie(
+  response: NextResponse,
+  user: SessionUser,
+  request: Request,
+): Promise<NextResponse> {
   const token = await createSession(user);
-  const store = await cookies();
-  store.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: SESSION_HOURS * 60 * 60,
-  });
+  response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions(request));
+  return response;
 }
 
-export async function clearSessionCookie(): Promise<void> {
-  const store = await cookies();
-  store.delete(SESSION_COOKIE);
+export function clearSessionCookie(response: NextResponse, request: Request): NextResponse {
+  response.cookies.set(SESSION_COOKIE, "", { ...sessionCookieOptions(request), maxAge: 0 });
+  return response;
 }
