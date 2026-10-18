@@ -130,3 +130,5 @@ Leave `DATABASE_URL` to the Postgres plugin. Do not paste a `file:` SQLite URL.
 7. Open the domain and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
 
 The first boot runs `prisma migrate deploy` against Postgres and creates the admin user only if that email does not already exist. Later deploys will not reset the password.
+
+If a Railway **Build image** step fails, check that the service builder is Nixpacks (this repo sets `builder = "NIXPACKS"`) and that install is not omitting devDependencies. The build needs TypeScript and Tailwind from `devDependencies`.
