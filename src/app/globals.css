@@ -48,6 +48,16 @@ html[data-theme="light"] {
 html,
 body {
   min-height: 100%;
+  min-height: 100dvh;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -100,6 +110,76 @@ button {
 
 .field:focus {
   border-color: rgb(16 185 129 / 0.7);
+}
+
+@media (max-width: 767px) {
+  .field {
+    font-size: 16px;
+  }
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100dvh;
+}
+
+.mobile-app-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: calc(0.85rem + env(safe-area-inset-top)) 1rem 0.85rem;
+  border-bottom: 1px solid var(--card-border);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+.mobile-app-main {
+  padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+}
+
+.mobile-tab-bar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 1px solid var(--card-border);
+  background: color-mix(in srgb, var(--card-solid) 94%, transparent);
+  backdrop-filter: blur(18px);
+  padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom));
+}
+
+.mobile-tab-bar .tab-idle,
+.mobile-tab-bar .tab-active {
+  display: flex;
+  min-height: 48px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mobile-tab-bar .tab-active {
+  color: #34d399;
+}
+
+@media (display-mode: standalone) {
+  html,
+  body {
+    height: 100%;
+    overscroll-behavior: none;
+  }
 }
 
 .btn {
