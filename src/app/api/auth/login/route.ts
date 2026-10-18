@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { setSessionCookie, verifyPassword } from "@/lib/auth";
+import { attachSessionCookie, verifyPassword } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { clientIp, handleRouteError, json } from "@/lib/http";
 import type { UserRole } from "@/types/domain";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
@@ -21,12 +23,6 @@ export async function POST(request: Request) {
       return json({ error: "Invalid credentials" }, 401);
     }
 
-    await setSessionCookie({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role as UserRole,
-    });
     await writeAudit({
       actorId: user.id,
       action: "auth.login",
@@ -34,7 +30,16 @@ export async function POST(request: Request) {
       entityId: user.id,
       ipAddress: ip,
     });
-    return json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } });
+    return attachSessionCookie(
+      json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } }),
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role as UserRole,
+      },
+      request,
+    );
   } catch (error) {
     return handleRouteError(error);
   }

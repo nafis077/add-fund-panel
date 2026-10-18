@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Wallet,
@@ -26,12 +26,10 @@ const LINKS = [
 
 export function Sidebar({ user }: { user: { name: string; role: string } }) {
   const pathname = usePathname();
-  const router = useRouter();
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    window.location.assign("/login");
   }
 
   return (
