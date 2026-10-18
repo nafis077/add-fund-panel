@@ -122,6 +122,8 @@ The service will boot without a database plugin (SQLite). Add **PostgreSQL** whe
 
 If `DATABASE_URL` is missing, boot uses SQLite and keeps running. Prefer the Postgres plugin for real use.
 
+If a custom domain or extra proxy sits in front of Railway and mutations return `Cross-site request blocked`, set `ALLOWED_ORIGINS` to the browser origin (`https://your-domain.com`).
+
 5. Settings that this repo already provides:
    - `railway.toml` start command: migrate → create admin if missing → `next start --hostname 0.0.0.0 --port $PORT`
    - Health check: `GET /api/health`
