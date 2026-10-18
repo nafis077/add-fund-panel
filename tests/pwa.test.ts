@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isIosDevice, isIosSafari, isStandaloneDisplay, shouldPromptIosInstall, themeColorFor } from "@/lib/pwa";
+import { isPublicPath } from "@/lib/public-paths";
 
 describe("pwa install helpers", () => {
   it("detects iPhone Safari and iPad desktop-mode", () => {
@@ -24,5 +25,13 @@ describe("pwa install helpers", () => {
       }),
     ).toBe(false);
     expect(themeColorFor("dark")).toBe("#070b14");
+  });
+
+  it("lets iPhone fetch the PWA files without a session", () => {
+    expect(isPublicPath("/manifest.webmanifest")).toBe(true);
+    expect(isPublicPath("/apple-icon")).toBe(true);
+    expect(isPublicPath("/icon")).toBe(true);
+    expect(isPublicPath("/sw.js")).toBe(true);
+    expect(isPublicPath("/funds")).toBe(false);
   });
 });
