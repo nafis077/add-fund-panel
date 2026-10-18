@@ -19,6 +19,7 @@ type Panel = {
   lastError: string | null;
   concurrencyLimit: number;
   minRequestIntervalMs: number;
+  paymentMethods: string[];
   createdAt: string;
   updatedAt: string;
   totalTransactions: number;
@@ -33,6 +34,7 @@ const emptyForm = {
   isDefault: false,
   concurrencyLimit: 2,
   minRequestIntervalMs: 250,
+  paymentMethods: ["Admin Credit"],
 };
 
 export default function PanelsPage() {
@@ -40,8 +42,26 @@ export default function PanelsPage() {
   const [query, setQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState<string | null>(null);
+  const [methodDraft, setMethodDraft] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  function addPaymentMethod() {
+    const method = methodDraft.trim();
+    if (!method) return;
+    setForm((current) => {
+      const exists = current.paymentMethods.some((item) => item.toLowerCase() === method.toLowerCase());
+      return exists ? current : { ...current, paymentMethods: [...current.paymentMethods, method] };
+    });
+    setMethodDraft("");
+  }
+
+  function removePaymentMethod(method: string) {
+    setForm((current) => ({
+      ...current,
+      paymentMethods: current.paymentMethods.filter((item) => item !== method),
+    }));
+  }
 
   async function load() {
     const payload = await api<{ panels: Panel[] }>(`/api/panels?q=${encodeURIComponent(query)}`);
@@ -56,6 +76,10 @@ export default function PanelsPage() {
   async function save(event: FormEvent) {
     event.preventDefault();
     setError("");
+    if (!form.paymentMethods.length) {
+      setError("Add at least one payment method for this panel");
+      return;
+    }
     try {
       if (editing) {
         await api(`/api/panels/${editing}`, { method: "PATCH", body: JSON.stringify(form) });
@@ -96,6 +120,39 @@ export default function PanelsPage() {
             Currency
             <input className="field mt-1" value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value })} />
           </label>
+          <div className="mt-3">
+            <p className="text-sm">Payment methods</p>
+            <p className="muted mt-1 text-xs">Add the exact method names this panel accepts in Admin API v2.</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {form.paymentMethods.map((method) => (
+                <button
+                  key={method}
+                  type="button"
+                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs"
+                  onClick={() => removePaymentMethod(method)}
+                >
+                  {method} ×
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 flex gap-2">
+              <input
+                className="field"
+                placeholder="e.g. Admin Credit, PayPal, Bonus"
+                value={methodDraft}
+                onChange={(event) => setMethodDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addPaymentMethod();
+                  }
+                }}
+              />
+              <button type="button" className="btn-secondary" onClick={addPaymentMethod}>
+                Add
+              </button>
+            </div>
+          </div>
           <label className="mt-3 flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.isDefault} onChange={(event) => setForm({ ...form, isDefault: event.target.checked })} />
             Default panel
@@ -118,6 +175,7 @@ export default function PanelsPage() {
                 <tr>
                   <th>Panel</th>
                   <th>Status</th>
+                  <th>Methods</th>
                   <th>Key</th>
                   <th>Transactions</th>
                   <th>Funds added</th>
@@ -135,6 +193,15 @@ export default function PanelsPage() {
                       <StatusBadge value={panel.connectionStatus} />
                       <div>
                         <StatusBadge value={panel.isActive ? "ACTIVE" : "INACTIVE"} />
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex max-w-56 flex-wrap gap-1">
+                        {(panel.paymentMethods ?? []).map((method) => (
+                          <span key={method} className="rounded-full border border-white/10 px-2 py-0.5 text-xs">
+                            {method}
+                          </span>
+                        ))}
                       </div>
                     </td>
                     <td className="font-mono">{panel.apiKeyMasked}</td>
@@ -168,7 +235,9 @@ export default function PanelsPage() {
                             isDefault: panel.isDefault,
                             concurrencyLimit: panel.concurrencyLimit,
                             minRequestIntervalMs: panel.minRequestIntervalMs,
+                            paymentMethods: panel.paymentMethods?.length ? panel.paymentMethods : ["Admin Credit"],
                           });
+                          setMethodDraft("");
                         }}
                       >
                         Edit

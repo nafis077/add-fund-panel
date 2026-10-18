@@ -2,6 +2,44 @@ import { z } from "zod";
 import { parseAmount } from "@/lib/money";
 import type { PaymentRowInput, PreviewIssue } from "@/types/domain";
 
+export const DEFAULT_PAYMENT_METHOD = "Admin Credit";
+
+export function parsePaymentMethods(raw: unknown): string[] {
+  let values: unknown[] = [];
+  if (Array.isArray(raw)) {
+    values = raw;
+  } else if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (trimmed) {
+      try {
+        const parsed = JSON.parse(trimmed) as unknown;
+        values = Array.isArray(parsed) ? parsed : trimmed.split(/[\n,]+/);
+      } catch {
+        values = trimmed.split(/[\n,]+/);
+      }
+    }
+  }
+  const seen = new Set<string>();
+  const methods: string[] = [];
+  for (const value of values) {
+    const method = String(value ?? "").trim();
+    const key = method.toLowerCase();
+    if (!method || seen.has(key)) continue;
+    seen.add(key);
+    methods.push(method.slice(0, 80));
+  }
+  return methods.length ? methods : [DEFAULT_PAYMENT_METHOD];
+}
+
+export function serializePaymentMethods(methods: unknown): string {
+  return JSON.stringify(parsePaymentMethods(methods));
+}
+
+export function methodAllowedOnPanel(method: string, methodsRaw: unknown): boolean {
+  const wanted = method.trim().toLowerCase();
+  return parsePaymentMethods(methodsRaw).some((item) => item.toLowerCase() === wanted);
+}
+
 export const panelInputSchema = z.object({
   name: z.string().trim().min(2).max(80),
   baseUrl: z
@@ -15,6 +53,7 @@ export const panelInputSchema = z.object({
   isDefault: z.boolean().optional(),
   concurrencyLimit: z.number().int().min(1).max(5).optional(),
   minRequestIntervalMs: z.number().int().min(200).max(10_000).optional(),
+  paymentMethods: z.array(z.string().trim().min(1).max(80)).min(1).max(40).optional(),
 });
 
 export const paymentRowSchema = z.object({

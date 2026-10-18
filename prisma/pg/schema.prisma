@@ -37,6 +37,7 @@ model Panel {
   lastError            String?
   concurrencyLimit     Int       @default(2)
   minRequestIntervalMs Int       @default(250)
+  paymentMethods       String    @default("[\"Admin Credit\"]")
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 

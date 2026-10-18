@@ -1,17 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { decryptSecret, encryptSecret, secretLast4 } from "@/lib/crypto";
 import { writeAudit } from "@/lib/audit";
-import { panelInputSchema, normalizeBaseUrl } from "@/lib/validation";
+import { panelInputSchema, normalizeBaseUrl, parsePaymentMethods, serializePaymentMethods } from "@/lib/validation";
 import { testPanelConnection } from "@/lib/smm-admin-api";
 import { addTotals, emptyTotals } from "@/lib/money";
 import { maskKey } from "@/lib/redact";
 import type { Prisma } from "@prisma/client";
 
-function publicPanel<T extends { encryptedApiKey: string; apiKeyLast4: string }>(panel: T) {
-  const { encryptedApiKey, ...rest } = panel;
+function publicPanel<T extends { encryptedApiKey: string; apiKeyLast4: string; paymentMethods: string }>(panel: T) {
+  const { encryptedApiKey, paymentMethods, ...rest } = panel;
   void encryptedApiKey;
   return {
     ...rest,
+    paymentMethods: parsePaymentMethods(paymentMethods),
     apiKeyMasked: maskKey(panel.apiKeyLast4),
   };
 }
@@ -79,6 +80,7 @@ export async function createPanel(input: unknown, actorId: string, ip?: string) 
         isDefault: data.isDefault ?? false,
         concurrencyLimit: data.concurrencyLimit ?? 2,
         minRequestIntervalMs: data.minRequestIntervalMs ?? 250,
+        paymentMethods: serializePaymentMethods(data.paymentMethods ?? ["Admin Credit"]),
       },
     });
   });
@@ -113,6 +115,9 @@ export async function updatePanel(id: string, input: unknown, actorId: string, i
         isDefault: data.isDefault ?? existing.isDefault,
         concurrencyLimit: data.concurrencyLimit ?? existing.concurrencyLimit,
         minRequestIntervalMs: data.minRequestIntervalMs ?? existing.minRequestIntervalMs,
+        paymentMethods: data.paymentMethods
+          ? serializePaymentMethods(data.paymentMethods)
+          : existing.paymentMethods,
         ...(data.apiKey
           ? {
               encryptedApiKey: encryptSecret(data.apiKey),

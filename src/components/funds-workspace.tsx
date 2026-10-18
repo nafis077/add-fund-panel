@@ -6,7 +6,7 @@ import { ConfirmModal } from "@/components/confirm-modal";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { api, uid } from "@/lib/client";
-import { parseCsv } from "@/lib/validation";
+import { DEFAULT_PAYMENT_METHOD, parseCsv, parsePaymentMethods } from "@/lib/validation";
 import type { PaymentRowInput, PreviewIssue, Workflow } from "@/types/domain";
 
 type Panel = {
@@ -16,7 +16,16 @@ type Panel = {
   isActive: boolean;
   isDefault: boolean;
   connectionStatus: string;
+  paymentMethods: string[];
 };
+
+function panelMethodsList(panel?: Panel | null) {
+  return parsePaymentMethods(panel?.paymentMethods);
+}
+
+function firstPanelMethod(panel?: Panel | null) {
+  return panelMethodsList(panel)[0] ?? DEFAULT_PAYMENT_METHOD;
+}
 
 type Preview = {
   rows: Array<PaymentRowInput & { currency: string; panelName: string }>;
@@ -30,13 +39,13 @@ type Preview = {
   methods: string[];
 };
 
-function emptyRow(panelId = ""): PaymentRowInput {
+function emptyRow(panelId = "", method = DEFAULT_PAYMENT_METHOD): PaymentRowInput {
   return {
     clientRowId: uid(),
     panelId,
     username: "",
     amount: "",
-    method: "Admin Credit",
+    method,
     memo: "",
     affiliateCommission: false,
   };
@@ -49,7 +58,7 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
   const [selectedPanels, setSelectedPanels] = useState<string[]>([]);
   const [username, setUsername] = useState("");
   const [amount, setAmount] = useState("");
-  const [method, setMethod] = useState("Admin Credit");
+  const [panelMethods, setPanelMethods] = useState<Record<string, string>>({});
   const [memo, setMemo] = useState("");
   const [affiliate, setAffiliate] = useState(false);
   const [batchName, setBatchName] = useState("");
@@ -63,10 +72,15 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
   useEffect(() => {
     void api<{ panels: Panel[] }>("/api/panels").then((payload) => {
       setPanels(payload.panels);
+      setPanelMethods(
+        Object.fromEntries(payload.panels.map((panel) => [panel.id, firstPanelMethod(panel)])),
+      );
       const defaults = payload.panels.filter((panel) => panel.isDefault && panel.isActive).map((panel) => panel.id);
-      setSelectedPanels(defaults.length ? defaults : payload.panels.filter((panel) => panel.isActive).slice(0, 1).map((p) => p.id));
+      const initial = defaults.length ? defaults : payload.panels.filter((panel) => panel.isActive).slice(0, 1).map((p) => p.id);
+      setSelectedPanels(initial);
       if (payload.panels[0] && rows.length === 1 && !rows[0].panelId) {
-        setRows([emptyRow(defaults[0] ?? payload.panels[0].id)]);
+        const startPanel = payload.panels.find((panel) => panel.id === initial[0]) ?? payload.panels[0];
+        setRows([emptyRow(startPanel.id, firstPanelMethod(startPanel))]);
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -79,20 +93,34 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
         panelId,
         username,
         amount,
-        method,
+        method: panelMethods[panelId] ?? firstPanelMethod(panels.find((panel) => panel.id === panelId)),
         memo,
         affiliateCommission: affiliate,
       }));
     }
     return rows;
-  }, [workflow, selectedPanels, username, amount, method, memo, affiliate, rows, submissionId]);
+  }, [workflow, selectedPanels, username, amount, panelMethods, memo, affiliate, rows, submissionId, panels]);
 
   function togglePanel(id: string) {
     setSelectedPanels((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+    setPanelMethods((current) => {
+      if (current[id]) return current;
+      const panel = panels.find((item) => item.id === id);
+      return { ...current, [id]: firstPanelMethod(panel) };
+    });
   }
 
   function updateRow(id: string, patch: Partial<PaymentRowInput>) {
-    setRows((current) => current.map((row) => (row.clientRowId === id ? { ...row, ...patch } : row)));
+    setRows((current) =>
+      current.map((row) => {
+        if (row.clientRowId !== id) return row;
+        if (patch.panelId && patch.panelId !== row.panelId) {
+          const nextPanel = panels.find((panel) => panel.id === patch.panelId);
+          return { ...row, ...patch, method: firstPanelMethod(nextPanel) };
+        }
+        return { ...row, ...patch };
+      }),
+    );
   }
 
   async function openConfirm() {
@@ -216,10 +244,26 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
               Amount
               <input className="field mt-1" value={amount} onChange={(event) => setAmount(event.target.value)} />
             </label>
-            <label className="text-sm text-slate-300">
-              Payment method
-              <input className="field mt-1" value={method} onChange={(event) => setMethod(event.target.value)} />
-            </label>
+            {selectedPanels.map((panelId) => {
+              const panel = panels.find((item) => item.id === panelId);
+              const methods = panelMethodsList(panel);
+              return (
+                <label key={panelId} className="text-sm text-slate-300">
+                  Payment method{selectedPanels.length > 1 ? ` — ${panel?.name ?? "panel"}` : ""}
+                  <select
+                    className="field mt-1"
+                    value={panelMethods[panelId] ?? methods[0] ?? DEFAULT_PAYMENT_METHOD}
+                    onChange={(event) => setPanelMethods((current) => ({ ...current, [panelId]: event.target.value }))}
+                  >
+                    {methods.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              );
+            })}
             <label className="text-sm text-slate-300">
               Memo
               <input className="field mt-1" value={memo} onChange={(event) => setMemo(event.target.value)} />
@@ -232,7 +276,13 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
         ) : (
           <div className="mt-5">
             <div className="mb-3 flex flex-wrap gap-2">
-              <button className="btn-secondary" onClick={() => setRows((current) => [...current, emptyRow(selectedPanels[0] ?? panels[0]?.id)])}>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  const panel = panels.find((item) => item.id === (selectedPanels[0] ?? panels[0]?.id)) ?? panels[0];
+                  setRows((current) => [...current, emptyRow(panel?.id, firstPanelMethod(panel))]);
+                }}
+              >
                 Add row
               </button>
               <label className="btn-secondary cursor-pointer">
@@ -280,7 +330,17 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
                         <input className="field" value={row.amount} onChange={(event) => updateRow(row.clientRowId, { amount: event.target.value })} />
                       </td>
                       <td>
-                        <input className="field" value={row.method} onChange={(event) => updateRow(row.clientRowId, { method: event.target.value })} />
+                        <select className="field" value={row.method} onChange={(event) => updateRow(row.clientRowId, { method: event.target.value })}>
+                          {panelMethodsList(panels.find((panel) => panel.id === row.panelId)).map((item) => (
+                            <option key={item} value={item}>
+                              {item}
+                            </option>
+                          ))}
+                          {row.method &&
+                          !panelMethodsList(panels.find((panel) => panel.id === row.panelId)).includes(row.method) ? (
+                            <option value={row.method}>{row.method} (not on panel)</option>
+                          ) : null}
+                        </select>
                       </td>
                       <td>
                         <input className="field" value={row.memo ?? ""} onChange={(event) => updateRow(row.clientRowId, { memo: event.target.value })} />
