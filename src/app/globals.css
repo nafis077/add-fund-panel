@@ -17,6 +17,7 @@ body {
 
 body {
   margin: 0;
+  font-feature-settings: "liga" 0, "clig" 0;
   background:
     radial-gradient(1200px 500px at 10% -10%, rgba(16, 185, 129, 0.16), transparent 50%),
     radial-gradient(900px 400px at 100% 0%, rgba(59, 130, 246, 0.12), transparent 45%),
