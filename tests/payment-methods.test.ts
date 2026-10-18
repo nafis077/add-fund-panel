@@ -5,7 +5,8 @@ import {
   serializePaymentMethods,
 } from "@/lib/validation";
 import { previewPayments } from "@/server/payments";
-import { createPanel, resetDb } from "./helpers";
+import { updatePanel } from "@/server/panels";
+import { createAdmin, createPanel, resetDb } from "./helpers";
 
 describe("panel payment methods", () => {
   it("parses JSON, comma lists, and de-duplicates methods", () => {
@@ -23,5 +24,13 @@ describe("panel payment methods", () => {
     ]);
     expect(methodAllowedOnPanel("Bonus", panel.paymentMethods)).toBe(true);
     expect(preview.issues.some((issue) => issue.code === "unknown_method")).toBe(true);
+  });
+
+  it("updates panel methods without requiring a new API key", async () => {
+    await resetDb();
+    const admin = await createAdmin();
+    const panel = await createPanel("Panel A");
+    const updated = await updatePanel(panel.id, { paymentMethods: ["PayPal", "Bonus"], apiKey: "" }, admin.id);
+    expect(updated.paymentMethods).toEqual(["PayPal", "Bonus"]);
   });
 });

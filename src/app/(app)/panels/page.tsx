@@ -81,10 +81,11 @@ export default function PanelsPage() {
       return;
     }
     try {
+      const payload = { ...form, apiKey: form.apiKey.trim() || undefined };
       if (editing) {
-        await api(`/api/panels/${editing}`, { method: "PATCH", body: JSON.stringify(form) });
+        await api(`/api/panels/${editing}`, { method: "PATCH", body: JSON.stringify(payload) });
       } else {
-        await api("/api/panels", { method: "POST", body: JSON.stringify(form) });
+        await api("/api/panels", { method: "POST", body: JSON.stringify(payload) });
       }
       setForm(emptyForm);
       setEditing(null);

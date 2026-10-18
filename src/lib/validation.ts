@@ -47,7 +47,10 @@ export const panelInputSchema = z.object({
     .trim()
     .url("Base API URL must be a valid URL")
     .refine((value) => /^https?:\/\//i.test(value), "Base API URL must start with http or https"),
-  apiKey: z.string().trim().min(8).max(512).optional(),
+  apiKey: z.preprocess(
+    (value) => (typeof value === "string" && !value.trim() ? undefined : value),
+    z.string().trim().min(8).max(512).optional(),
+  ),
   currency: z.string().trim().min(3).max(8).default("USD"),
   isActive: z.boolean().optional(),
   isDefault: z.boolean().optional(),

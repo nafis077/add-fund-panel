@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import type { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { AuthError, hasPermission } from "@/lib/permissions";
-import { SESSION_COOKIE } from "@/lib/auth-constants";
+import { SESSION_COOKIE, SESSION_HOURS } from "@/lib/auth-constants";
 import { sessionCookieOptions } from "@/lib/session-cookie";
 import type { Permission, UserRole } from "@/types/domain";
 
