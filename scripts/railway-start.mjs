@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { applyBootSecrets } from "./boot-secrets.mjs";
-import { assertSchemaExists, isPostgresUrl } from "./prisma-env.mjs";
+import { applyDatabaseEnv, assertSchemaExists, isPostgresUrl } from "./prisma-env.mjs";
 
 function run(command, args, env) {
   return new Promise((resolve, reject) => {
@@ -12,13 +12,15 @@ function run(command, args, env) {
   });
 }
 
-const env = applyBootSecrets({ ...process.env });
+const env = applyDatabaseEnv(applyBootSecrets({ ...process.env }));
 const port = env.PORT || "3000";
-const schema = assertSchemaExists();
+const schema = assertSchemaExists(env);
 
-if (!isPostgresUrl(env.DATABASE_URL)) {
-  console.error("Railway needs a PostgreSQL DATABASE_URL. Add a Railway Postgres plugin and redeploy.");
-  process.exit(1);
+if (isPostgresUrl(env.DATABASE_URL)) {
+  console.log("[boot] Using PostgreSQL");
+} else {
+  console.log("[boot] No PostgreSQL DATABASE_URL. Using SQLite so the service can start.");
+  console.log("[boot] Add a Railway Postgres plugin, then reference DATABASE_URL on this service to keep data across deploys.");
 }
 
 await run("npx", ["prisma", "generate", "--schema", schema], env);
