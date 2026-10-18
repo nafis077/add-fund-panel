@@ -1,9 +1,10 @@
 import { spawn } from "node:child_process";
-import { assertSchemaExists, usePostgres } from "./prisma-env.mjs";
+import { applyBootSecrets } from "./boot-secrets.mjs";
+import { assertSchemaExists, isPostgresUrl } from "./prisma-env.mjs";
 
-function run(command, args) {
+function run(command, args, env) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: "inherit", env: process.env });
+    const child = spawn(command, args, { stdio: "inherit", env });
     child.on("exit", (code) => {
       if (code === 0) resolve();
       else reject(new Error(`${command} ${args.join(" ")} exited ${code}`));
@@ -11,20 +12,16 @@ function run(command, args) {
   });
 }
 
-const port = process.env.PORT || "3000";
+const env = applyBootSecrets({ ...process.env });
+const port = env.PORT || "3000";
 const schema = assertSchemaExists();
 
-if (!usePostgres()) {
+if (!isPostgresUrl(env.DATABASE_URL)) {
   console.error("Railway needs a PostgreSQL DATABASE_URL. Add a Railway Postgres plugin and redeploy.");
   process.exit(1);
 }
 
-if (!process.env.AUTH_SECRET || !process.env.ENCRYPTION_KEY) {
-  console.error("Set AUTH_SECRET and ENCRYPTION_KEY in the Railway service variables.");
-  process.exit(1);
-}
-
-await run("npx", ["prisma", "generate", "--schema", schema]);
-await run("npx", ["prisma", "migrate", "deploy", "--schema", schema]);
-await run("node", ["scripts/ensure-admin.mjs"]);
-await run("npx", ["next", "start", "--hostname", "0.0.0.0", "--port", port]);
+await run("npx", ["prisma", "generate", "--schema", schema], env);
+await run("npx", ["prisma", "migrate", "deploy", "--schema", schema], env);
+await run("node", ["scripts/ensure-admin.mjs"], env);
+await run("npx", ["next", "start", "--hostname", "0.0.0.0", "--port", port], env);

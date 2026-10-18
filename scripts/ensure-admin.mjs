@@ -1,19 +1,13 @@
+import { randomBytes } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
+import { applyBootSecrets } from "./boot-secrets.mjs";
+
+applyBootSecrets(process.env);
 
 const prisma = new PrismaClient();
 
-function requiredSecret(name, minLength = 16) {
-  const value = process.env[name];
-  if (!value || value.length < minLength) {
-    throw new Error(`${name} must be set to a long random value before starting`);
-  }
-}
-
 async function main() {
-  requiredSecret("AUTH_SECRET");
-  requiredSecret("ENCRYPTION_KEY");
-
   await prisma.appSetting.upsert({
     where: { id: "default" },
     update: {},
@@ -27,9 +21,11 @@ async function main() {
     return;
   }
 
-  const password = process.env.ADMIN_PASSWORD;
+  let password = process.env.ADMIN_PASSWORD;
+  let generated = false;
   if (!password || password === "ChangeMeNow!") {
-    throw new Error("Set a unique ADMIN_PASSWORD before the first Railway deploy");
+    password = randomBytes(12).toString("base64url");
+    generated = true;
   }
 
   await prisma.user.create({
@@ -40,7 +36,13 @@ async function main() {
       role: "SUPER_ADMIN",
     },
   });
-  console.info(`Created administrator ${email}`);
+
+  if (generated) {
+    console.warn(`[boot] Created ${email} with a generated password: ${password}`);
+    console.warn("[boot] Sign in with that password, then change it. Or set ADMIN_PASSWORD and recreate the user.");
+  } else {
+    console.info(`Created administrator ${email}`);
+  }
 }
 
 main()
