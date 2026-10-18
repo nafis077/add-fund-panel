@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("OPERATOR")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdBatches   PaymentBatch[]     @relation("BatchCreator")
+  approvedBatches  PaymentBatch[]     @relation("BatchApprover")
+  auditLogs        PaymentAuditLog[]
+  assignedAttempts PaymentAttempt[]
+}
+
+model Panel {
+  id                   String    @id @default(cuid())
+  name                 String
+  baseUrl              String
+  encryptedApiKey      String
+  apiKeyLast4          String
+  currency             String    @default("USD")
+  isActive             Boolean   @default(true)
+  isDefault            Boolean   @default(false)
+  connectionStatus     String    @default("UNKNOWN")
+  lastCheckedAt        DateTime?
+  lastError            String?
+  concurrencyLimit     Int       @default(2)
+  minRequestIntervalMs Int       @default(250)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  operations PaymentOperation[]
+  batches    PaymentBatchPanel[]
+
+  @@index([isActive])
+  @@index([name])
+}
+
+model AppSetting {
+  id                         String   @id @default("default")
+  highValueApprovalEnabled   Boolean  @default(false)
+  highValueApprovalThreshold String   @default("1000")
+  highValueApprovalCurrency  String   @default("USD")
+  defaultPaymentMethod       String   @default("Admin Credit")
+  defaultMemo                String   @default("Added from Central Fund Manager")
+  requireSecondConfirmAbove  String   @default("5000")
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+}
+
+model PaymentBatch {
+  id                 String    @id @default(cuid())
+  name               String
+  workflow           String
+  status             String    @default("QUEUED")
+  clientSubmissionId String    @unique
+  createdById        String
+  approvedById       String?
+  approvedAt         DateTime?
+  cancelledAt        DateTime?
+  cancelReason       String?
+  panelSnapshot      String
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  createdBy  User                @relation("BatchCreator", fields: [createdById], references: [id])
+  approvedBy User?               @relation("BatchApprover", fields: [approvedById], references: [id])
+  operations PaymentOperation[]
+  panels     PaymentBatchPanel[]
+  auditLogs  PaymentAuditLog[]
+
+  @@index([status, createdAt])
+  @@index([createdById])
+}
+
+model PaymentBatchPanel {
+  batchId String
+  panelId String
+
+  batch PaymentBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  panel Panel        @relation(fields: [panelId], references: [id])
+
+  @@id([batchId, panelId])
+}
+
+model PaymentOperation {
+  id                  String    @id @default(cuid())
+  internalTxnId       String    @unique
+  batchId             String
+  panelId             String
+  username            String
+  amount              String
+  currency            String
+  method              String
+  memo                String?
+  affiliateCommission Boolean   @default(false)
+  status              String    @default("QUEUED")
+  rowFingerprint      String
+  clientRowId         String
+  remotePaymentId     String?
+  remoteBalance       String?
+  remoteCurrency      String?
+  errorMessage        String?
+  executionMs         Int?
+  claimedAt           DateTime?
+  claimedBy           String?
+  claimExpiresAt      DateTime?
+  processedAt         DateTime?
+  retryCount          Int       @default(0)
+  lastAttemptAt       DateTime?
+  lastAttemptOutcome  String?
+  verificationNotes   String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  batch    PaymentBatch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  panel    Panel            @relation(fields: [panelId], references: [id])
+  attempts PaymentAttempt[]
+
+  @@unique([batchId, clientRowId])
+  @@index([status, panelId, claimedAt])
+  @@index([batchId, status])
+  @@index([username])
+  @@index([remotePaymentId])
+  @@index([rowFingerprint])
+}
+
+model PaymentAttempt {
+  id                 String    @id @default(cuid())
+  operationId        String
+  actorId            String?
+  startedAt          DateTime  @default(now())
+  finishedAt         DateTime?
+  outcome            String
+  submitted          Boolean   @default(false)
+  httpStatus         Int?
+  errorCode          String?
+  remotePaymentId    String?
+  requestFingerprint String
+  redactedResponse   String?
+  durationMs         Int?
+
+  operation PaymentOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  actor     User?            @relation(fields: [actorId], references: [id])
+
+  @@index([operationId, startedAt])
+}
+
+model PaymentAuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  batchId    String?
+  metadata   String
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  actor User?         @relation(fields: [actorId], references: [id])
+  batch PaymentBatch? @relation(fields: [batchId], references: [id])
+
+  @@index([entityType, entityId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
+
+model RateLimitBucket {
+  id        String   @id
+  tokens    Int
+  updatedAt DateTime @updatedAt
+}

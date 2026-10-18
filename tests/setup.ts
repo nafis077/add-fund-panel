@@ -11,7 +11,11 @@ process.env.DISABLE_INPROCESS_WORKER = "1";
 const dbPath = path.join(process.cwd(), "prisma", "test.db");
 rmSync(dbPath, { force: true });
 rmSync(`${dbPath}-journal`, { force: true });
-execSync("npx prisma db push --skip-generate --accept-data-loss", {
+execSync("npx prisma generate --schema=prisma/schema.prisma", {
+  stdio: "pipe",
+  env: process.env,
+});
+execSync("npx prisma db push --schema=prisma/schema.prisma --skip-generate --accept-data-loss", {
   stdio: "pipe",
   env: process.env,
 });

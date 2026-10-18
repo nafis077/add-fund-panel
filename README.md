@@ -43,7 +43,7 @@ A payment is marked **Completed** only when the panel response has `error_code =
 | Layer | Choice |
 |---|---|
 | App | Next.js 15 App Router + TypeScript |
-| Data | Prisma + SQLite (swap `DATABASE_URL` for Postgres in production if needed) |
+| Data | Prisma + SQLite locally, PostgreSQL on Railway |
 | Auth | JWT httpOnly session, RBAC |
 | Queue | Durable DB ledger with atomic claim (`QUEUED` → `PROCESSING`) |
 | UI | Tailwind, existing dark treasury theme |
@@ -101,3 +101,32 @@ Coverage includes single-user credits, multi-panel same-user and mixed-user batc
 ## Environment
 
 See `.env.example`. `ENCRYPTION_KEY` must be a 32-byte secret (64 hex chars recommended). Never commit a production `.env`.
+
+## Deploy on Railway
+
+Railway needs **PostgreSQL**. Do not rely on SQLite there — Railway disks are ephemeral and a redeploy would wipe the payment ledger.
+
+1. Push this branch to GitHub.
+2. In [Railway](https://railway.app) create a new project → **Deploy from GitHub repo**.
+3. Add a **PostgreSQL** plugin to the same project. Railway will inject `DATABASE_URL`.
+4. In the web service **Variables**, set:
+
+| Variable | Example |
+|---|---|
+| `AUTH_SECRET` | long random string (`openssl rand -base64 48`) |
+| `ENCRYPTION_KEY` | 64 hex chars (`openssl rand -hex 32`) |
+| `ADMIN_EMAIL` | your login email |
+| `ADMIN_PASSWORD` | a strong password, not `ChangeMeNow!` |
+| `ADMIN_NAME` | `Treasury Admin` |
+| `NEXT_PUBLIC_APP_NAME` | `Panel Treasury` |
+
+Leave `DATABASE_URL` to the Postgres plugin. Do not paste a `file:` SQLite URL.
+
+5. Settings that this repo already provides:
+   - `railway.toml` start command: migrate → create admin if missing → `next start --hostname 0.0.0.0 --port $PORT`
+   - Health check: `GET /api/health`
+   - Node 22 via Nixpacks
+6. Generate a public domain under **Settings → Networking → Generate Domain**.
+7. Open the domain and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
+
+The first boot runs `prisma migrate deploy` against Postgres and creates the admin user only if that email does not already exist. Later deploys will not reset the password.

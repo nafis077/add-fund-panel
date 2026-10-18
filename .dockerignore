@@ -1,0 +1,10 @@
+node_modules
+.next
+.git
+.env
+.env.local
+prisma/dev.db
+prisma/test.db
+coverage
+scripts/ui-walkthrough.mjs
+scripts/confirm-walkthrough.mjs
