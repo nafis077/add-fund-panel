@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-feature-settings: "liga" 0, "clig" 0;
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(16, 185, 129, 0.16), transparent 50%),
+    radial-gradient(900px 400px at 100% 0%, rgba(59, 130, 246, 0.12), transparent 45%),
+    #070b14;
+  color: #e5eef7;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+.card {
+  @apply rounded-2xl border border-white/10 bg-ink-800/80 shadow-panel backdrop-blur;
+}
+
+.field {
+  @apply w-full rounded-xl border border-white/10 bg-ink-900 px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-mint-500/70;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-primary {
+  @apply btn bg-mint-500 text-ink-950 hover:bg-mint-400;
+}
+
+.btn-secondary {
+  @apply btn border border-white/10 bg-white/5 text-slate-100 hover:bg-white/10;
+}
+
+.btn-danger {
+  @apply btn bg-rose-500/90 text-white hover:bg-rose-400;
+}
+
+.table-wrap {
+  @apply overflow-x-auto;
+}
+
+table.data {
+  @apply w-full min-w-[720px] border-collapse text-left text-sm;
+}
+
+table.data th {
+  @apply px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400;
+}
+
+table.data td {
+  @apply border-t border-white/5 px-3 py-3 align-middle;
+}
+
+.muted {
+  @apply text-sm text-slate-400;
+}

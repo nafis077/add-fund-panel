@@ -1,0 +1,17 @@
+node_modules
+.next
+.vercel
+.env
+.env.local
+.env.*.local
+prisma/dev.db
+prisma/dev.db-journal
+prisma/test.db
+prisma/test.db-journal
+coverage
+*.log
+.DS_Store
+tsconfig.tsbuildinfo
+next-env.d.ts
+scripts/ui-walkthrough.mjs
+scripts/confirm-walkthrough.mjs

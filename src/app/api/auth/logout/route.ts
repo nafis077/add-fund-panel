@@ -1,0 +1,18 @@
+import { clearSessionCookie, getSession } from "@/lib/auth";
+import { writeAudit } from "@/lib/audit";
+import { clientIp, json } from "@/lib/http";
+
+export async function POST(request: Request) {
+  const session = await getSession();
+  await clearSessionCookie();
+  if (session) {
+    await writeAudit({
+      actorId: session.id,
+      action: "auth.logout",
+      entityType: "User",
+      entityId: session.id,
+      ipAddress: clientIp(request),
+    });
+  }
+  return json({ ok: true });
+}
