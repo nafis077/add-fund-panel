@@ -210,6 +210,22 @@ export async function executeOperation(operationId: string, actorId?: string | n
   });
 
   await refreshBatchProgress(operation.batchId);
+  await writeAudit({
+    actorId: actorId ?? null,
+    action: result.ok ? "payment.completed" : `payment.${result.outcome.toLowerCase()}`,
+    entityType: "PaymentOperation",
+    entityId: operation.id,
+    batchId: operation.batchId,
+    metadata: {
+      username: operation.username,
+      panel: operation.panel.name,
+      amount: operation.amount,
+      currency: operation.currency,
+      status: nextStatus,
+      error: result.errorMessage,
+      remotePaymentId: result.paymentId,
+    },
+  });
   return { result, nextStatus };
 }
 

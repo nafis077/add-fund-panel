@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/funds", label: "Add Funds" },
   { href: "/funds/bulk", label: "Bulk" },
   { href: "/history", label: "History" },
+  { href: "/logs", label: "Logs" },
   { href: "/batches", label: "Batches" },
   { href: "/panels", label: "Panels" },
   { href: "/settings", label: "Settings" },

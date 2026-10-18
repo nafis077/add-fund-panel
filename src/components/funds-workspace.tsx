@@ -302,6 +302,17 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
         )}
 
         {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
+        <p className="muted mt-4">
+          After you confirm, this app sends the credit to the panel Admin API. Status and errors are on{" "}
+          <a className="text-mint-400" href="/logs">
+            Activity Log
+          </a>
+          ,{" "}
+          <a className="text-mint-400" href="/history">
+            Payment History
+          </a>
+          , and Batch History.
+        </p>
         <div className="mt-6 flex justify-end">
           <button className="btn-primary" onClick={() => void openConfirm()} disabled={busy}>
             Review distribution
