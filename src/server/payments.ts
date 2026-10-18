@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/lib/audit";
 import { addTotals, emptyTotals, normalizeAmount, totalsExceed } from "@/lib/money";
-import { batchSubmitSchema, methodAllowedOnPanel, rowFingerprint, validateRows } from "@/lib/validation";
+import { batchSubmitSchema, resolvePaymentMethod, rowFingerprint, validateRows } from "@/lib/validation";
 import { getSettings } from "@/server/settings";
 import type { CurrencyTotals, PaymentRowInput, PreviewIssue } from "@/types/domain";
 
@@ -43,7 +43,9 @@ export async function previewPayments(rows: PaymentRowInput[]): Promise<PreviewR
         code: "inactive_panel",
         message: `${panel.name} is disabled`,
       });
-    } else if (row.method && !methodAllowedOnPanel(row.method, panel.paymentMethods)) {
+    }
+    const resolvedMethod = panel && row.method ? resolvePaymentMethod(row.method, panel.paymentMethods) : null;
+    if (panel && row.method && !resolvedMethod) {
       issues.push({
         rowId: row.clientRowId,
         level: "error",
@@ -67,7 +69,7 @@ export async function previewPayments(rows: PaymentRowInput[]): Promise<PreviewR
       amount,
       currency,
       panelName: panel?.name ?? "Unknown panel",
-      method: row.method || settings.defaultPaymentMethod,
+      method: resolvedMethod || row.method || settings.defaultPaymentMethod,
     };
   });
 

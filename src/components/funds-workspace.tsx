@@ -8,7 +8,13 @@ import { PageHeader } from "@/components/page-header";
 import { Segmented } from "@/components/segmented";
 import { StatusBadge } from "@/components/status-badge";
 import { api, uid } from "@/lib/client";
-import { DEFAULT_PAYMENT_METHOD, parseCsv, parsePaymentMethods } from "@/lib/validation";
+import {
+  DEFAULT_PAYMENT_METHOD,
+  formatMethodChoice,
+  parseCsv,
+  parsePaymentMethodOptions,
+  type PaymentMethodOption,
+} from "@/lib/validation";
 import type { PaymentRowInput, PreviewIssue, Workflow } from "@/types/domain";
 
 type Panel = {
@@ -18,15 +24,15 @@ type Panel = {
   isActive: boolean;
   isDefault: boolean;
   connectionStatus: string;
-  paymentMethods: string[];
+  paymentMethods: Array<string | PaymentMethodOption>;
 };
 
-function panelMethodsList(panel?: Panel | null) {
-  return parsePaymentMethods(panel?.paymentMethods);
+function panelMethodsList(panel?: Panel | null): PaymentMethodOption[] {
+  return parsePaymentMethodOptions(panel?.paymentMethods);
 }
 
 function firstPanelMethod(panel?: Panel | null) {
-  return panelMethodsList(panel)[0] ?? DEFAULT_PAYMENT_METHOD;
+  return panelMethodsList(panel)[0]?.apiName ?? DEFAULT_PAYMENT_METHOD;
 }
 
 type Preview = {
@@ -277,12 +283,12 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
                   Method{selectedPanels.length > 1 ? ` · ${panel?.name ?? "panel"}` : ""}
                   <select
                     className="field"
-                    value={panelMethods[panelId] ?? methods[0] ?? DEFAULT_PAYMENT_METHOD}
+                    value={panelMethods[panelId] ?? methods[0]?.apiName ?? DEFAULT_PAYMENT_METHOD}
                     onChange={(event) => setPanelMethods((current) => ({ ...current, [panelId]: event.target.value }))}
                   >
                     {methods.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
+                      <option key={item.apiName} value={item.apiName}>
+                        {formatMethodChoice(item)}
                       </option>
                     ))}
                   </select>
@@ -357,12 +363,14 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
                       <td>
                         <select className="field" value={row.method} onChange={(event) => updateRow(row.clientRowId, { method: event.target.value })}>
                           {panelMethodsList(panels.find((panel) => panel.id === row.panelId)).map((item) => (
-                            <option key={item} value={item}>
-                              {item}
+                            <option key={item.apiName} value={item.apiName}>
+                              {formatMethodChoice(item)}
                             </option>
                           ))}
                           {row.method &&
-                          !panelMethodsList(panels.find((panel) => panel.id === row.panelId)).includes(row.method) ? (
+                          !panelMethodsList(panels.find((panel) => panel.id === row.panelId)).some(
+                            (item) => item.apiName === row.method,
+                          ) ? (
                             <option value={row.method}>{row.method} (not on panel)</option>
                           ) : null}
                         </select>

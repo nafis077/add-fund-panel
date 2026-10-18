@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { decryptSecret, encryptSecret, secretLast4 } from "@/lib/crypto";
 import { writeAudit } from "@/lib/audit";
-import { panelInputSchema, normalizeBaseUrl, parsePaymentMethods, serializePaymentMethods } from "@/lib/validation";
+import { panelInputSchema, normalizeBaseUrl, parsePaymentMethodOptions, serializePaymentMethods } from "@/lib/validation";
 import { testPanelConnection } from "@/lib/smm-admin-api";
 import { addTotals, emptyTotals } from "@/lib/money";
 import { maskKey } from "@/lib/redact";
@@ -12,7 +12,7 @@ function publicPanel<T extends { encryptedApiKey: string; apiKeyLast4: string; p
   void encryptedApiKey;
   return {
     ...rest,
-    paymentMethods: parsePaymentMethods(paymentMethods),
+    paymentMethods: parsePaymentMethodOptions(paymentMethods),
     apiKeyMasked: maskKey(panel.apiKeyLast4),
   };
 }

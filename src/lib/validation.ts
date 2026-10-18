@@ -4,40 +4,78 @@ import type { PaymentRowInput, PreviewIssue } from "@/types/domain";
 
 export const DEFAULT_PAYMENT_METHOD = "Admin Credit";
 
-export function parsePaymentMethods(raw: unknown): string[] {
-  let values: unknown[] = [];
-  if (Array.isArray(raw)) {
-    values = raw;
-  } else if (typeof raw === "string") {
-    const trimmed = raw.trim();
-    if (trimmed) {
-      try {
-        const parsed = JSON.parse(trimmed) as unknown;
-        values = Array.isArray(parsed) ? parsed : trimmed.split(/[\n,]+/);
-      } catch {
-        values = trimmed.split(/[\n,]+/);
-      }
-    }
+export type PaymentMethodOption = {
+  apiName: string;
+  label: string;
+};
+
+function methodEntries(raw: unknown): unknown[] {
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw !== "string") return [];
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    return Array.isArray(parsed) ? parsed : trimmed.split(/[\n,]+/);
+  } catch {
+    return trimmed.split(/[\n,]+/);
   }
+}
+
+function normalizeMethodEntry(value: unknown): PaymentMethodOption | null {
+  if (typeof value === "string") {
+    const apiName = value.trim().slice(0, 80);
+    if (!apiName) return null;
+    return { apiName, label: apiName };
+  }
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const apiName = String(record.apiName ?? record.method ?? record.name ?? "").trim().slice(0, 80);
+  const label = String(record.label ?? record.displayName ?? record.alias ?? "").trim().slice(0, 80);
+  if (!apiName) return null;
+  return { apiName, label: label || apiName };
+}
+
+export function parsePaymentMethodOptions(raw: unknown): PaymentMethodOption[] {
   const seen = new Set<string>();
-  const methods: string[] = [];
-  for (const value of values) {
-    const method = String(value ?? "").trim();
-    const key = method.toLowerCase();
-    if (!method || seen.has(key)) continue;
+  const methods: PaymentMethodOption[] = [];
+  for (const value of methodEntries(raw)) {
+    const method = normalizeMethodEntry(value);
+    if (!method) continue;
+    const key = method.apiName.toLowerCase();
+    if (seen.has(key)) continue;
     seen.add(key);
-    methods.push(method.slice(0, 80));
+    methods.push(method);
   }
-  return methods.length ? methods : [DEFAULT_PAYMENT_METHOD];
+  return methods.length ? methods : [{ apiName: DEFAULT_PAYMENT_METHOD, label: DEFAULT_PAYMENT_METHOD }];
+}
+
+export function parsePaymentMethods(raw: unknown): string[] {
+  return parsePaymentMethodOptions(raw).map((method) => method.apiName);
 }
 
 export function serializePaymentMethods(methods: unknown): string {
-  return JSON.stringify(parsePaymentMethods(methods));
+  return JSON.stringify(parsePaymentMethodOptions(methods));
+}
+
+export function resolvePaymentMethod(method: string, methodsRaw: unknown): string | null {
+  const wanted = method.trim().toLowerCase();
+  if (!wanted) return null;
+  const options = parsePaymentMethodOptions(methodsRaw);
+  const byApi = options.find((item) => item.apiName.toLowerCase() === wanted);
+  if (byApi) return byApi.apiName;
+  const byLabel = options.find((item) => item.label.toLowerCase() === wanted);
+  return byLabel?.apiName ?? null;
 }
 
 export function methodAllowedOnPanel(method: string, methodsRaw: unknown): boolean {
-  const wanted = method.trim().toLowerCase();
-  return parsePaymentMethods(methodsRaw).some((item) => item.toLowerCase() === wanted);
+  return resolvePaymentMethod(method, methodsRaw) !== null;
+}
+
+export function formatMethodChoice(method: PaymentMethodOption): string {
+  return method.label.toLowerCase() === method.apiName.toLowerCase()
+    ? method.apiName
+    : `${method.label} (${method.apiName})`;
 }
 
 export const panelInputSchema = z.object({
@@ -56,7 +94,20 @@ export const panelInputSchema = z.object({
   isDefault: z.boolean().optional(),
   concurrencyLimit: z.number().int().min(1).max(5).optional(),
   minRequestIntervalMs: z.number().int().min(200).max(10_000).optional(),
-  paymentMethods: z.array(z.string().trim().min(1).max(80)).min(1).max(40).optional(),
+  paymentMethods: z
+    .array(
+      z.union([
+        z.string().trim().min(1).max(80),
+        z.object({
+          apiName: z.string().trim().min(1).max(80).optional(),
+          method: z.string().trim().min(1).max(80).optional(),
+          label: z.string().trim().max(80).optional(),
+        }),
+      ]),
+    )
+    .min(1)
+    .max(40)
+    .optional(),
 });
 
 export const paymentRowSchema = z.object({

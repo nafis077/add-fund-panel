@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { TotalsText } from "@/components/money-text";
 import { api } from "@/lib/client";
+import { formatMethodChoice, parsePaymentMethodOptions, type PaymentMethodOption } from "@/lib/validation";
 
 type Panel = {
   id: string;
@@ -20,7 +21,7 @@ type Panel = {
   lastError: string | null;
   concurrencyLimit: number;
   minRequestIntervalMs: number;
-  paymentMethods: string[];
+  paymentMethods: Array<string | PaymentMethodOption>;
   createdAt: string;
   updatedAt: string;
   totalTransactions: number;
@@ -35,7 +36,7 @@ const emptyForm = {
   isDefault: false,
   concurrencyLimit: 2,
   minRequestIntervalMs: 250,
-  paymentMethods: ["Admin Credit"],
+  paymentMethods: [{ apiName: "Admin Credit", label: "Admin Credit" }] as PaymentMethodOption[],
 };
 
 export default function PanelsPage() {
@@ -43,24 +44,27 @@ export default function PanelsPage() {
   const [query, setQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState<string | null>(null);
-  const [methodDraft, setMethodDraft] = useState("");
+  const [methodApiDraft, setMethodApiDraft] = useState("");
+  const [methodLabelDraft, setMethodLabelDraft] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   function addPaymentMethod() {
-    const method = methodDraft.trim();
-    if (!method) return;
+    const apiName = methodApiDraft.trim();
+    const label = methodLabelDraft.trim() || apiName;
+    if (!apiName) return;
     setForm((current) => {
-      const exists = current.paymentMethods.some((item) => item.toLowerCase() === method.toLowerCase());
-      return exists ? current : { ...current, paymentMethods: [...current.paymentMethods, method] };
+      const exists = current.paymentMethods.some((item) => item.apiName.toLowerCase() === apiName.toLowerCase());
+      return exists ? current : { ...current, paymentMethods: [...current.paymentMethods, { apiName, label }] };
     });
-    setMethodDraft("");
+    setMethodApiDraft("");
+    setMethodLabelDraft("");
   }
 
-  function removePaymentMethod(method: string) {
+  function removePaymentMethod(apiName: string) {
     setForm((current) => ({
       ...current,
-      paymentMethods: current.paymentMethods.filter((item) => item !== method),
+      paymentMethods: current.paymentMethods.filter((item) => item.apiName !== apiName),
     }));
   }
 
@@ -123,26 +127,41 @@ export default function PanelsPage() {
             <input className="field" value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value })} />
           </label>
           <div className="mt-3">
-            <p className="text-sm">Payment methods</p>
-            <p className="muted mt-1 text-xs">Add the exact method names this panel accepts in Admin API v2.</p>
+            <p className="text-sm font-medium">Payment methods</p>
+            <p className="muted mt-1 text-xs">
+              API name is sent to the panel. Display name is what you pick on Add Funds, for example API
+              <code> manual</code> and display <code> USDT</code>.
+            </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {form.paymentMethods.map((method) => (
                 <button
-                  key={method}
+                  key={method.apiName}
                   type="button"
                   className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs"
-                  onClick={() => removePaymentMethod(method)}
+                  onClick={() => removePaymentMethod(method.apiName)}
                 >
-                  {method} ×
+                  {formatMethodChoice(method)} ×
                 </button>
               ))}
             </div>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
               <input
                 className="field"
-                placeholder="e.g. Admin Credit, PayPal, Bonus"
-                value={methodDraft}
-                onChange={(event) => setMethodDraft(event.target.value)}
+                placeholder="API name (manual)"
+                value={methodApiDraft}
+                onChange={(event) => setMethodApiDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addPaymentMethod();
+                  }
+                }}
+              />
+              <input
+                className="field"
+                placeholder="Display name (USDT)"
+                value={methodLabelDraft}
+                onChange={(event) => setMethodLabelDraft(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
@@ -183,9 +202,9 @@ export default function PanelsPage() {
                   <StatusBadge value={panel.connectionStatus} />
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1">
-                  {(panel.paymentMethods ?? []).map((method) => (
-                    <span key={method} className="chip">
-                      {method}
+                  {parsePaymentMethodOptions(panel.paymentMethods).map((method) => (
+                    <span key={method.apiName} className="chip">
+                      {formatMethodChoice(method)}
                     </span>
                   ))}
                 </div>
@@ -205,9 +224,10 @@ export default function PanelsPage() {
                         isDefault: panel.isDefault,
                         concurrencyLimit: panel.concurrencyLimit,
                         minRequestIntervalMs: panel.minRequestIntervalMs,
-                        paymentMethods: panel.paymentMethods?.length ? panel.paymentMethods : ["Admin Credit"],
+                        paymentMethods: parsePaymentMethodOptions(panel.paymentMethods),
                       });
-                      setMethodDraft("");
+                      setMethodApiDraft("");
+                      setMethodLabelDraft("");
                     }}
                   >
                     Edit
@@ -257,9 +277,9 @@ export default function PanelsPage() {
                     </td>
                     <td>
                       <div className="flex max-w-56 flex-wrap gap-1">
-                        {(panel.paymentMethods ?? []).map((method) => (
-                          <span key={method} className="rounded-full border border-white/10 px-2 py-0.5 text-xs">
-                            {method}
+                        {parsePaymentMethodOptions(panel.paymentMethods).map((method) => (
+                          <span key={method.apiName} className="rounded-full border border-white/10 px-2 py-0.5 text-xs">
+                            {formatMethodChoice(method)}
                           </span>
                         ))}
                       </div>
@@ -295,9 +315,10 @@ export default function PanelsPage() {
                             isDefault: panel.isDefault,
                             concurrencyLimit: panel.concurrencyLimit,
                             minRequestIntervalMs: panel.minRequestIntervalMs,
-                            paymentMethods: panel.paymentMethods?.length ? panel.paymentMethods : ["Admin Credit"],
+                            paymentMethods: parsePaymentMethodOptions(panel.paymentMethods),
                           });
-                          setMethodDraft("");
+                          setMethodApiDraft("");
+                          setMethodLabelDraft("");
                         }}
                       >
                         Edit
