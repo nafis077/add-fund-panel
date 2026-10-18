@@ -595,6 +595,66 @@ html[data-theme="light"] .text-orange-200 {
   font-weight: 650;
 }
 
+.notice-ok,
+.notice-bad {
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  padding: 0.85rem 1rem;
+  font-size: 0.875rem;
+}
+
+.notice-ok {
+  border-color: rgb(16 185 129 / 0.35);
+  background: rgb(16 185 129 / 0.1);
+  color: #6ee7b7;
+}
+
+.notice-bad {
+  border-color: rgb(244 63 94 / 0.35);
+  background: rgb(244 63 94 / 0.1);
+  color: #fda4af;
+}
+
+html[data-theme="light"] .notice-ok {
+  color: #047857;
+}
+
+html[data-theme="light"] .notice-bad {
+  color: #be123c;
+}
+
+.check-row {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.9rem;
+}
+
+.method-box {
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+  background: var(--chip);
+  padding: 0.85rem;
+}
+
+.method-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .method-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .mobile-cards {
   display: grid;
   gap: 0.75rem;

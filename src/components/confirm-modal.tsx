@@ -40,7 +40,7 @@ export function ConfirmModal({
   return (
     <div className="sheet-scrim" onClick={onCancel}>
       <div className="card sheet" onClick={(event) => event.stopPropagation()}>
-        <p className="page-kicker">Review before sending</p>
+        <p className="page-kicker">Check this once</p>
         <h3 className="mt-2 text-xl font-semibold">{title}</h3>
         <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
           <div className="rounded-xl bg-white/5 p-3">
@@ -96,7 +96,7 @@ export function ConfirmModal({
             Back
           </button>
           <button className="btn-primary" onClick={onConfirm} disabled={busy || errors.length > 0}>
-            {busy ? "Submitting…" : "Confirm"}
+            {busy ? "Sending…" : "Send now"}
           </button>
         </div>
       </div>

@@ -79,6 +79,11 @@ export default function DashboardPage() {
             ? `Showing ${activePanel.name}. Switch panels from the top bar.`
             : "Live totals stay separated by currency."
         }
+        actions={
+          <Link className="btn-primary" href="/funds">
+            Add funds
+          </Link>
+        }
       />
 
       <div className="mb-3 md:hidden">

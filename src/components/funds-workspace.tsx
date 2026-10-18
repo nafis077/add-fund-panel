@@ -10,7 +10,6 @@ import { StatusBadge } from "@/components/status-badge";
 import { api, uid } from "@/lib/client";
 import {
   DEFAULT_PAYMENT_METHOD,
-  formatMethodChoice,
   parseCsv,
   parsePaymentMethodOptions,
   type PaymentMethodOption,
@@ -218,7 +217,7 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
       <PageHeader
         eyebrow={mode === "simple" ? "Credit" : "Campaign"}
         title={mode === "simple" ? "Add Funds" : "Bulk Distribution"}
-        description="Credits go through each panel Admin API. Nothing is written to a remote panel database."
+        description="Pick a panel, type the username and amount, then review before sending."
       />
 
       <div className="mb-5">
@@ -238,7 +237,7 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
           <input
             className="field"
             value={batchName}
-            placeholder="October user bonus"
+            placeholder="Optional note, for example October bonus"
             onChange={(event) => setBatchName(event.target.value)}
           />
         </label>
@@ -269,11 +268,23 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
             </div>
             <label className="field-label">
               Username
-              <input className="field" autoCapitalize="none" value={username} onChange={(event) => setUsername(event.target.value)} />
+              <input
+                className="field"
+                autoCapitalize="none"
+                placeholder="john"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+              />
             </label>
             <label className="field-label">
               Amount
-              <input className="field" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} />
+              <input
+                className="field"
+                inputMode="decimal"
+                placeholder="10"
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+              />
             </label>
             {selectedPanels.map((panelId) => {
               const panel = panels.find((item) => item.id === panelId);
@@ -288,7 +299,7 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
                   >
                     {methods.map((item) => (
                       <option key={item.apiName} value={item.apiName}>
-                        {formatMethodChoice(item)}
+                        {item.label}
                       </option>
                     ))}
                   </select>
@@ -297,9 +308,9 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
             })}
             <label className="field-label">
               Memo
-              <input className="field" value={memo} onChange={(event) => setMemo(event.target.value)} />
+              <input className="field" placeholder="Optional" value={memo} onChange={(event) => setMemo(event.target.value)} />
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="check-row">
               <input type="checkbox" checked={affiliate} onChange={(event) => setAffiliate(event.target.checked)} />
               Affiliate commission
             </label>
@@ -364,7 +375,7 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
                         <select className="field" value={row.method} onChange={(event) => updateRow(row.clientRowId, { method: event.target.value })}>
                           {panelMethodsList(panels.find((panel) => panel.id === row.panelId)).map((item) => (
                             <option key={item.apiName} value={item.apiName}>
-                              {formatMethodChoice(item)}
+                              {item.label}
                             </option>
                           ))}
                           {row.method &&
@@ -396,18 +407,18 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
 
         {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
         <p className="muted mt-4 max-md:hidden">
-          After confirm, credits go to the panel Admin API. Status is on Activity Log, History, and Batches.
+          Review first. After you send, status is on Activity Log, History, and Batches.
         </p>
         <div className="sticky-action">
           <button className="btn-primary w-full md:w-auto" onClick={() => void openConfirm()} disabled={busy}>
-            {busy ? "Checking…" : "Review"}
+            {busy ? "Checking…" : "Review and send"}
           </button>
         </div>
       </div>
 
       <ConfirmModal
         open={confirmOpen}
-        title="Confirm Fund Distribution"
+        title="Send these funds?"
         panelCount={preview?.panelCount ?? 0}
         recipientCount={preview?.recipientCount ?? 0}
         transactionCount={preview?.transactionCount ?? 0}
