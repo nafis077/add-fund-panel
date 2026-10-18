@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { InstallAppPrompt } from "@/components/install-app-prompt";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 function LoginForm() {
@@ -31,11 +32,12 @@ function LoginForm() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center p-6">
-      <div className="absolute right-4 top-4">
+    <div className="relative flex min-h-dvh items-center justify-center p-6">
+      <div className="absolute right-4 top-4" style={{ top: "max(1rem, env(safe-area-inset-top))" }}>
         <ThemeToggle compact />
       </div>
-      <form onSubmit={(event) => void onSubmit(event)} className="card w-full max-w-md p-8">
+      <div className="w-full max-w-md space-y-4">
+        <form onSubmit={(event) => void onSubmit(event)} className="card w-full p-8">
         <p className="text-[11px] uppercase tracking-[0.24em] text-mint-400">Panel Treasury</p>
         <h1 className="mt-2 text-2xl font-semibold">Administrator sign in</h1>
         <p className="muted mt-2">Centralized fund control for connected SMM panels.</p>
@@ -53,10 +55,12 @@ function LoginForm() {
           />
         </label>
         {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
-        <button className="btn-primary mt-6 w-full" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
+          <button className="btn-primary mt-6 w-full" disabled={busy}>
+            {busy ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
+        <InstallAppPrompt />
+      </div>
     </div>
   );
 }

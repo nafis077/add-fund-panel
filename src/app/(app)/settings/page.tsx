@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { InstallAppPrompt } from "@/components/install-app-prompt";
 import { PageHeader } from "@/components/page-header";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/components/theme-provider";
@@ -69,6 +70,16 @@ export default function SettingsPage() {
           </p>
         </div>
         <ThemeToggle />
+      </div>
+      <div className="card mb-6 p-5">
+        <h3 className="font-medium">iPhone app shortcut</h3>
+        <p className="muted mt-1">
+          Open this site in Safari, tap Share, then Add to Home Screen. The icon opens full screen like a native
+          app. Long-press the icon for shortcuts to Add Funds, Panels, and Activity Log.
+        </p>
+        <div className="mt-4">
+          <InstallAppPrompt />
+        </div>
       </div>
       <form className="card grid gap-4 p-5 md:grid-cols-2" onSubmit={(event) => void save(event)}>
         <label className="flex items-center gap-2 text-sm md:col-span-2">
