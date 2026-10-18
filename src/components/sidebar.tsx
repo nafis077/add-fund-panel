@@ -10,6 +10,7 @@ import {
   Layers3,
   Server,
   Settings,
+  ScrollText,
   LogOut,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -19,6 +20,7 @@ const LINKS = [
   { href: "/funds", label: "Add Funds", icon: Wallet },
   { href: "/funds/bulk", label: "Bulk Distribution", icon: Table2 },
   { href: "/history", label: "Payment History", icon: History },
+  { href: "/logs", label: "Activity Log", icon: ScrollText },
   { href: "/batches", label: "Batch History", icon: Layers3 },
   { href: "/panels", label: "Panel Management", icon: Server },
   { href: "/settings", label: "Settings", icon: Settings },

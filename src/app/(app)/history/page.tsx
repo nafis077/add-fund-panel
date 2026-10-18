@@ -55,9 +55,14 @@ export default function HistoryPage() {
     void api<{ panels: Array<{ id: string; name: string }> }>("/api/panels").then((payload) => {
       setPanels(payload.panels);
     });
-    void refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    void refresh();
+    const timer = setInterval(() => void refresh(), 4000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   async function refresh() {
     setError("");
@@ -97,7 +102,7 @@ export default function HistoryPage() {
       <PageHeader
         eyebrow="Audit trail"
         title="Payment history"
-        description="Local operations are the durable ledger. Remote history is fetched live from each panel and linked when a payment ID matches."
+        description="Local operations are the durable ledger for every Add Funds attempt. Open a row for the full error. Activity Log has the audit trail."
         actions={
           <button className="btn-secondary" onClick={() => void refresh()}>
             Refresh
@@ -144,9 +149,17 @@ export default function HistoryPage() {
                   <th>Method</th>
                   <th>Status</th>
                   <th>Remote ID</th>
+                  <th>Error</th>
                 </tr>
               </thead>
               <tbody>
+                {local.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="muted py-6">
+                      No local payments yet. After you confirm Add Funds, each attempt appears here and on Activity Log.
+                    </td>
+                  </tr>
+                ) : null}
                 {local.map((item) => (
                   <tr key={item.id} className="cursor-pointer" onClick={() => setSelected(item)}>
                     <td>{item.panel.name}</td>
@@ -159,6 +172,7 @@ export default function HistoryPage() {
                       <StatusBadge value={item.status} />
                     </td>
                     <td className="font-mono">{item.remotePaymentId ?? "—"}</td>
+                    <td className="max-w-xs truncate text-rose-300">{item.errorMessage ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

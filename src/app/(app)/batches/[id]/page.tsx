@@ -23,6 +23,14 @@ type Operation = {
   panel: { name: string };
 };
 
+type AuditItem = {
+  id: string;
+  action: string;
+  metadata: string;
+  createdAt: string;
+  actor?: { name: string } | null;
+};
+
 type Batch = {
   id: string;
   name: string;
@@ -31,6 +39,7 @@ type Batch = {
   createdBy: { name: string };
   approvedBy?: { name: string } | null;
   operations: Operation[];
+  auditLogs?: AuditItem[];
   summary: {
     progress: number;
     counts: Record<string, number>;
@@ -163,6 +172,21 @@ export default function BatchDetailPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+      <div className="card mt-4 p-5">
+        <h3 className="font-medium">Batch log</h3>
+        <p className="muted mt-1">Submit, API outcomes, retries, and cancels for this distribution.</p>
+        <div className="mt-4 space-y-2 text-sm">
+          {(batch.auditLogs ?? []).length === 0 ? <p className="muted">No audit events on this batch yet.</p> : null}
+          {(batch.auditLogs ?? []).map((item) => (
+            <p key={item.id} className="border-t border-white/5 py-2">
+              <span className="muted">{new Date(item.createdAt).toLocaleString()}</span>
+              {" · "}
+              <span className="font-mono text-xs">{item.action}</span>
+              {item.actor?.name ? ` · ${item.actor.name}` : ""}
+            </p>
+          ))}
         </div>
       </div>
     </div>

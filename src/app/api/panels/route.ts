@@ -1,10 +1,12 @@
 import { requirePermission } from "@/lib/auth";
 import { assertSameOrigin, clientIp, handleRouteError, json } from "@/lib/http";
+import { ensureWorker } from "@/lib/worker-runtime";
 import { createPanel, listPanels } from "@/server/panels";
 
 export async function GET(request: Request) {
   try {
     await requirePermission("payments.view");
+    ensureWorker();
     const query = new URL(request.url).searchParams.get("q") ?? undefined;
     return json({ panels: await listPanels(query) });
   } catch (error) {

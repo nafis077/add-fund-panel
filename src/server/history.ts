@@ -96,6 +96,36 @@ export async function listBatches() {
   return batches;
 }
 
+export async function listActivity(limit = 80) {
+  const take = Math.min(Math.max(limit, 1), 200);
+  const [audit, failures] = await Promise.all([
+    prisma.paymentAuditLog.findMany({
+      include: {
+        actor: { select: { id: true, name: true, email: true } },
+        batch: { select: { id: true, name: true, status: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take,
+    }),
+    prisma.paymentOperation.findMany({
+      where: {
+        OR: [
+          { status: "FAILED" },
+          { status: "NEEDS_VERIFICATION" },
+          { errorMessage: { not: null } },
+        ],
+      },
+      include: {
+        panel: { select: { id: true, name: true } },
+        batch: { select: { id: true, name: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 40,
+    }),
+  ]);
+  return { audit, failures };
+}
+
 export async function getBatch(id: string) {
   const batch = await prisma.paymentBatch.findUnique({
     where: { id },
