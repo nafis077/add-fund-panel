@@ -4,7 +4,6 @@ import { ActivePanelProvider } from "@/components/active-panel-provider";
 import { AppTopBar } from "@/components/app-top-bar";
 import { FaceLockGate } from "@/components/face-lock-gate";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
-import { PersistenceWarning } from "@/components/persistence-warning";
 import { Sidebar } from "@/components/sidebar";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +22,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="flex min-h-dvh flex-1 flex-col">
             <AppTopBar userName={session.name} />
             <main className="mobile-app-main flex-1 px-4 pb-4 pt-3 md:p-8">
-              <PersistenceWarning />
               {children}
             </main>
             <MobileTabBar />

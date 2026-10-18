@@ -3,7 +3,6 @@
 import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { InstallAppPrompt } from "@/components/install-app-prompt";
-import { PersistenceWarning } from "@/components/persistence-warning";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { biometricLabel, faceIdStatus, markUnlocked, unlockWithFaceId } from "@/lib/face-id";
 
@@ -87,7 +86,6 @@ function LoginForm() {
             </button>
           ) : null}
         </form>
-        <PersistenceWarning />
         <InstallAppPrompt />
       </div>
     </div>
