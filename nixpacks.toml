@@ -2,6 +2,7 @@
 NIXPACKS_NODE_VERSION = "22"
 NPM_CONFIG_PRODUCTION = "false"
 NODE_ENV = "production"
+PRISMA_HIDE_UPDATE_MESSAGE = "1"
 
 [phases.install]
 cmds = ["npm ci --include=dev"]

@@ -13,6 +13,7 @@ function run(command, args, env) {
 }
 
 const env = applyDatabaseEnv(applyBootSecrets({ ...process.env }));
+env.PRISMA_HIDE_UPDATE_MESSAGE = "1";
 const port = env.PORT || "3000";
 const schema = assertSchemaExists(env);
 
