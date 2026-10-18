@@ -20,7 +20,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       { name: "Add Funds", short_name: "Funds", url: "/funds", description: "Credit a panel user" },
-      { name: "Panels", short_name: "Panels", url: "/panels", description: "Manage connected panels" },
+      { name: "Panel Management", short_name: "Panels", url: "/panels", description: "Manage connected panels" },
       { name: "Activity Log", short_name: "Logs", url: "/logs", description: "See payment results" },
     ],
   };

@@ -1,12 +1,12 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { TotalsText } from "@/components/money-text";
 import { api, uid } from "@/lib/client";
-import { formatMethodChoice, parsePaymentMethodOptions, type PaymentMethodOption } from "@/lib/validation";
+import { parsePaymentMethodOptions, type PaymentMethodOption } from "@/lib/validation";
 
 type MethodDraft = PaymentMethodOption & { rowId: string };
 
@@ -61,7 +61,23 @@ function preparedMethods(methods: MethodDraft[]): PaymentMethodOption[] {
   return result;
 }
 
+function MethodNames({ method }: { method: PaymentMethodOption }) {
+  return (
+    <span className="grid min-w-[7rem] gap-0.5 rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-xs">
+      <span>
+        <span className="muted">API </span>
+        {method.apiName}
+      </span>
+      <span>
+        <span className="muted">Shown </span>
+        {method.label || method.apiName}
+      </span>
+    </span>
+  );
+}
+
 export default function PanelsPage() {
+  const formRef = useRef<HTMLFormElement>(null);
   const [panels, setPanels] = useState<Panel[]>([]);
   const [query, setQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
@@ -107,6 +123,9 @@ export default function PanelsPage() {
       minRequestIntervalMs: panel.minRequestIntervalMs,
       paymentMethods: parsePaymentMethodOptions(panel.paymentMethods).map(methodDraft),
     });
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   async function load() {
@@ -145,12 +164,17 @@ export default function PanelsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Connections"
-        title="Panels"
-        description="API keys are encrypted at rest and never returned to the browser."
+        eyebrow="Panel management"
+        title="Panel Management"
+        description="Set each panel's API method name and the shown name you type and pick later. API keys stay encrypted."
       />
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <form className="card order-2 p-5 xl:order-1" onSubmit={(event) => void save(event)}>
+        <form
+          ref={formRef}
+          id="panel-form"
+          className="card order-1 p-5"
+          onSubmit={(event) => void save(event)}
+        >
           <h3 className="font-medium">{editing ? "Edit panel" : "Add panel"}</h3>
           <label className="field-label mt-4">
             Name
@@ -219,7 +243,7 @@ export default function PanelsPage() {
           <button className="btn-primary mt-4 w-full">{editing ? "Update panel" : "Save panel"}</button>
         </form>
 
-        <div className="card order-1 p-5 xl:order-2">
+        <div className="card order-2 p-5">
           <div className="mb-4 flex gap-2">
             <input className="field" placeholder="Search panels" value={query} onChange={(event) => setQuery(event.target.value)} />
             <button className="btn-secondary" onClick={() => void load()}>
@@ -227,7 +251,9 @@ export default function PanelsPage() {
             </button>
           </div>
           <div className="mobile-cards mb-4">
-            {panels.length === 0 ? <EmptyState title="No panels yet" body="Add the first panel on the left." /> : null}
+            {panels.length === 0 ? (
+              <EmptyState title="No panels yet" body="Add the first panel in the form above." />
+            ) : null}
             {panels.map((panel) => (
               <div key={panel.id} className="mobile-item">
                 <div className="flex items-start justify-between gap-3">
@@ -239,9 +265,7 @@ export default function PanelsPage() {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1">
                   {parsePaymentMethodOptions(panel.paymentMethods).map((method) => (
-                    <span key={method.apiName} className="chip">
-                      {formatMethodChoice(method)}
-                    </span>
+                    <MethodNames key={method.apiName} method={method} />
                   ))}
                 </div>
                 <p className="muted mt-3">
@@ -274,7 +298,7 @@ export default function PanelsPage() {
                 <tr>
                   <th>Panel</th>
                   <th>Status</th>
-                  <th>Methods</th>
+                  <th>API / Shown</th>
                   <th>Key</th>
                   <th>Transactions</th>
                   <th>Funds added</th>
@@ -297,9 +321,7 @@ export default function PanelsPage() {
                     <td>
                       <div className="flex max-w-56 flex-wrap gap-1">
                         {parsePaymentMethodOptions(panel.paymentMethods).map((method) => (
-                          <span key={method.apiName} className="rounded-full border border-white/10 px-2 py-0.5 text-xs">
-                            {formatMethodChoice(method)}
-                          </span>
+                          <MethodNames key={method.apiName} method={method} />
                         ))}
                       </div>
                     </td>

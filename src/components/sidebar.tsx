@@ -23,7 +23,7 @@ const LINKS = [
   { href: "/history", label: "History", icon: History },
   { href: "/logs", label: "Activity Log", icon: ScrollText },
   { href: "/batches", label: "Batches", icon: Layers3 },
-  { href: "/panels", label: "Panels", icon: Server },
+  { href: "/panels", label: "Panel Management", icon: Server },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
