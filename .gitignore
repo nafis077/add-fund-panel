@@ -13,3 +13,5 @@ coverage
 .DS_Store
 tsconfig.tsbuildinfo
 next-env.d.ts
+scripts/ui-walkthrough.mjs
+scripts/confirm-walkthrough.mjs
