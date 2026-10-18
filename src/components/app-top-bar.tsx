@@ -7,7 +7,7 @@ export function AppTopBar({ userName }: { userName: string }) {
   return (
     <header className="app-top-bar">
       <div className="app-top-bar-brand">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-mint-400">Panel Treasury</p>
+        <p className="page-kicker">Panel Treasury</p>
         <p className="truncate text-sm text-slate-400">{userName}</p>
       </div>
       <PanelSwitcher />

@@ -64,9 +64,7 @@ export function MobileTabBar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMoreOpen(false)}
-                className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm ${
-                  active ? "bg-white/10 text-white" : "text-slate-300"
-                }`}
+                className={`nav-link ${active ? "nav-link-on" : ""}`}
               >
                 <Icon size={18} />
                 {link.label}

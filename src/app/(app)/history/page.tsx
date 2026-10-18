@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useActivePanel } from "@/components/active-panel-provider";
+import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
+import { Segmented } from "@/components/segmented";
 import { StatusBadge } from "@/components/status-badge";
 import { MoneyText } from "@/components/money-text";
 import { api } from "@/lib/client";
@@ -52,6 +54,7 @@ export default function HistoryPage() {
   });
   const [selected, setSelected] = useState<LocalItem | null>(null);
   const [error, setError] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     void api<{ panels: Array<{ id: string; name: string }> }>("/api/panels").then((payload) => {
@@ -109,23 +112,30 @@ export default function HistoryPage() {
     <div>
       <PageHeader
         eyebrow="Audit trail"
-        title="Payment history"
-        description="Local operations are the durable ledger for every Add Funds attempt. Open a row for the full error. Activity Log has the audit trail."
+        title="History"
+        description="Local operations are the durable ledger for every Add Funds attempt."
         actions={
           <button className="btn-secondary" onClick={() => void refresh()}>
             Refresh
           </button>
         }
       />
-      <div className="mb-4 flex gap-2">
-        <button className={tab === "local" ? "btn-primary" : "btn-secondary"} onClick={() => setTab("local")}>
-          Local operations
-        </button>
-        <button className={tab === "remote" ? "btn-primary" : "btn-secondary"} onClick={() => setTab("remote")}>
-          Remote panel history
+      <div className="mb-4">
+        <Segmented
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: "local", label: "Local" },
+            { value: "remote", label: "Remote" },
+          ]}
+        />
+      </div>
+      <div className="mb-3 md:hidden">
+        <button className="btn-secondary w-full" onClick={() => setFiltersOpen((open) => !open)}>
+          {filtersOpen ? "Hide filters" : "Filters"}
         </button>
       </div>
-      <div className="card mb-4 grid gap-3 p-4 md:grid-cols-4">
+      <div className={`card mb-4 grid gap-3 p-4 md:grid-cols-4 ${filtersOpen ? "" : "max-md:hidden"}`}>
         <select
           className="field"
           value={filters.panelId}
@@ -148,91 +158,140 @@ export default function HistoryPage() {
         <input className="field" type="date" value={filters.from} onChange={(event) => setFilters({ ...filters, from: event.target.value })} />
         <input className="field" type="date" value={filters.to} onChange={(event) => setFilters({ ...filters, to: event.target.value })} />
         <button className="btn-secondary" onClick={() => void refresh()}>
-          Apply filters
+          Apply
         </button>
       </div>
       {error ? <p className="mb-4 text-sm text-rose-300">{error}</p> : null}
-      <div className="card p-4">
-        <div className="table-wrap">
-          {tab === "local" ? (
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>Panel</th>
-                  <th>User</th>
-                  <th>Amount</th>
-                  <th>Method</th>
-                  <th>Status</th>
-                  <th>Remote ID</th>
-                  <th>Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                {local.length === 0 ? (
+
+      {tab === "local" ? (
+        <>
+          <div className="mobile-cards">
+            {local.length === 0 ? (
+              <div className="card">
+                <EmptyState title="No payments yet" body="After you confirm Add Funds, attempts appear here." />
+              </div>
+            ) : null}
+            {local.map((item) => (
+              <button key={item.id} type="button" className="mobile-item text-left" onClick={() => setSelected(item)}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{item.username}</p>
+                    <p className="muted">{item.panel.name}</p>
+                  </div>
+                  <StatusBadge value={item.status} />
+                </div>
+                <p className="mt-2 text-lg font-semibold">
+                  <MoneyText amount={item.amount} currency={item.currency} />
+                </p>
+                <p className="muted mt-1">{item.method}</p>
+                {item.errorMessage ? <p className="mt-2 text-sm text-rose-300">{item.errorMessage}</p> : null}
+              </button>
+            ))}
+          </div>
+          <div className="card desktop-table p-4">
+            <div className="table-wrap">
+              <table className="data">
+                <thead>
                   <tr>
-                    <td colSpan={7} className="muted py-6">
-                      No local payments yet. After you confirm Add Funds, each attempt appears here and on Activity Log.
-                    </td>
+                    <th>Panel</th>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Remote ID</th>
+                    <th>Error</th>
                   </tr>
-                ) : null}
-                {local.map((item) => (
-                  <tr key={item.id} className="cursor-pointer" onClick={() => setSelected(item)}>
-                    <td>{item.panel.name}</td>
-                    <td>{item.username}</td>
-                    <td>
-                      <MoneyText amount={item.amount} currency={item.currency} />
-                    </td>
-                    <td>{item.method}</td>
-                    <td>
-                      <StatusBadge value={item.status} />
-                    </td>
-                    <td className="font-mono">{item.remotePaymentId ?? "—"}</td>
-                    <td className="max-w-xs truncate text-rose-300">{item.errorMessage ?? "—"}</td>
+                </thead>
+                <tbody>
+                  {local.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="muted py-6">
+                        No local payments yet.
+                      </td>
+                    </tr>
+                  ) : null}
+                  {local.map((item) => (
+                    <tr key={item.id} className="cursor-pointer" onClick={() => setSelected(item)}>
+                      <td>{item.panel.name}</td>
+                      <td>{item.username}</td>
+                      <td>
+                        <MoneyText amount={item.amount} currency={item.currency} />
+                      </td>
+                      <td>{item.method}</td>
+                      <td>
+                        <StatusBadge value={item.status} />
+                      </td>
+                      <td className="font-mono">{item.remotePaymentId ?? "—"}</td>
+                      <td className="max-w-xs truncate text-rose-300">{item.errorMessage ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="mobile-cards">
+            {remote.length === 0 ? (
+              <div className="card">
+                <EmptyState title="No remote rows" body="Pick a panel and apply filters." />
+              </div>
+            ) : null}
+            {remote.map((item) => (
+              <div key={item.id} className="mobile-item">
+                <p className="font-mono text-xs">{item.id}</p>
+                <p className="mt-1 font-semibold">{item.username ?? "—"}</p>
+                <p className="muted mt-1">
+                  {item.amount && item.currency ? <MoneyText amount={item.amount} currency={item.currency} /> : item.amount}
+                </p>
+                <p className="mt-2">{item.status}</p>
+              </div>
+            ))}
+          </div>
+          <div className="card desktop-table p-4">
+            <div className="table-wrap">
+              <table className="data">
+                <thead>
+                  <tr>
+                    <th>Remote ID</th>
+                    <th>User</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Linked local operation</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>Remote ID</th>
-                  <th>User</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Linked local operation</th>
-                </tr>
-              </thead>
-              <tbody>
-                {remote.map((item) => (
-                  <tr key={item.id}>
-                    <td className="font-mono">{item.id}</td>
-                    <td>{item.username}</td>
-                    <td>
-                      {item.amount && item.currency ? <MoneyText amount={item.amount} currency={item.currency} /> : item.amount}
-                    </td>
-                    <td>{item.status}</td>
-                    <td>
-                      {item.localOperation ? (
-                        <a className="text-mint-400" href={`/batches/${item.localOperation.batchId}`}>
-                          {item.localOperation.status}
-                        </a>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
+                </thead>
+                <tbody>
+                  {remote.map((item) => (
+                    <tr key={item.id}>
+                      <td className="font-mono">{item.id}</td>
+                      <td>{item.username}</td>
+                      <td>
+                        {item.amount && item.currency ? <MoneyText amount={item.amount} currency={item.currency} /> : item.amount}
+                      </td>
+                      <td>{item.status}</td>
+                      <td>
+                        {item.localOperation ? (
+                          <a className="text-mint-400" href={`/batches/${item.localOperation.batchId}`}>
+                            {item.localOperation.status}
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {selected ? (
-        <div className="fixed inset-0 z-40 flex justify-end bg-black/50" onClick={() => setSelected(null)}>
-          <aside className="card h-full w-full max-w-md overflow-y-auto rounded-none p-6" onClick={(event) => event.stopPropagation()}>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-mint-400">Transaction details</p>
+        <div className="sheet-scrim" onClick={() => setSelected(null)}>
+          <aside className="card sheet" onClick={(event) => event.stopPropagation()}>
+            <p className="page-kicker">Transaction</p>
             <h3 className="mt-2 text-xl font-semibold">{selected.username}</h3>
             <div className="mt-4 space-y-2 text-sm">
               <p>Panel: {selected.panel.name}</p>
@@ -250,6 +309,9 @@ export default function HistoryPage() {
                 Open batch {selected.batch.name}
               </a>
             </div>
+            <button className="btn-secondary mt-6 w-full" onClick={() => setSelected(null)}>
+              Close
+            </button>
           </aside>
         </div>
       ) : null}

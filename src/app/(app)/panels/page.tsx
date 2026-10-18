@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { TotalsText } from "@/components/money-text";
@@ -99,27 +100,27 @@ export default function PanelsPage() {
     <div>
       <PageHeader
         eyebrow="Connections"
-        title="Panel management"
-        description="API keys are encrypted at rest and never returned to the browser. Use a test against GET /adminapi/v2/payments."
+        title="Panels"
+        description="API keys are encrypted at rest and never returned to the browser."
       />
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
         <form className="card p-5" onSubmit={(event) => void save(event)}>
           <h3 className="font-medium">{editing ? "Edit panel" : "Add panel"}</h3>
-          <label className="mt-4 block text-sm">
+          <label className="field-label mt-4">
             Name
-            <input className="field mt-1" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+            <input className="field" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
           </label>
-          <label className="mt-3 block text-sm">
+          <label className="field-label mt-3">
             Base API URL
-            <input className="field mt-1" placeholder="https://smmxpanel.com" value={form.baseUrl} onChange={(event) => setForm({ ...form, baseUrl: event.target.value })} />
+            <input className="field" placeholder="https://smmxpanel.com" value={form.baseUrl} onChange={(event) => setForm({ ...form, baseUrl: event.target.value })} />
           </label>
-          <label className="mt-3 block text-sm">
+          <label className="field-label mt-3">
             Admin API key
-            <input className="field mt-1" type="password" value={form.apiKey} onChange={(event) => setForm({ ...form, apiKey: event.target.value })} />
+            <input className="field" type="password" value={form.apiKey} onChange={(event) => setForm({ ...form, apiKey: event.target.value })} />
           </label>
-          <label className="mt-3 block text-sm">
+          <label className="field-label mt-3">
             Currency
-            <input className="field mt-1" value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value })} />
+            <input className="field" value={form.currency} onChange={(event) => setForm({ ...form, currency: event.target.value })} />
           </label>
           <div className="mt-3">
             <p className="text-sm">Payment methods</p>
@@ -170,7 +171,65 @@ export default function PanelsPage() {
               Filter
             </button>
           </div>
-          <div className="table-wrap">
+          <div className="mobile-cards mb-4">
+            {panels.length === 0 ? <EmptyState title="No panels yet" body="Add the first panel on the left." /> : null}
+            {panels.map((panel) => (
+              <div key={panel.id} className="mobile-item">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{panel.name}</p>
+                    <p className="muted break-all">{panel.baseUrl}</p>
+                  </div>
+                  <StatusBadge value={panel.connectionStatus} />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {(panel.paymentMethods ?? []).map((method) => (
+                    <span key={method} className="chip">
+                      {method}
+                    </span>
+                  ))}
+                </div>
+                <p className="muted mt-3">
+                  {panel.totalTransactions} tx · <TotalsText totals={panel.fundsAdded} />
+                </p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => {
+                      setEditing(panel.id);
+                      setForm({
+                        name: panel.name,
+                        baseUrl: panel.baseUrl,
+                        apiKey: "",
+                        currency: panel.currency,
+                        isDefault: panel.isDefault,
+                        concurrencyLimit: panel.concurrencyLimit,
+                        minRequestIntervalMs: panel.minRequestIntervalMs,
+                        paymentMethods: panel.paymentMethods?.length ? panel.paymentMethods : ["Admin Credit"],
+                      });
+                      setMethodDraft("");
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="btn-secondary"
+                    onClick={() =>
+                      void api<{ test: { message: string } }>(`/api/panels/${panel.id}/test`, { method: "POST" })
+                        .then((result) => {
+                          setMessage(result.test.message);
+                          return load();
+                        })
+                        .catch((err) => setError(err instanceof Error ? err.message : "Test failed"))
+                    }
+                  >
+                    Test
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="table-wrap desktop-table">
             <table className="data">
               <thead>
                 <tr>

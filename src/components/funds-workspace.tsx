@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useActivePanel } from "@/components/active-panel-provider";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { PageHeader } from "@/components/page-header";
+import { Segmented } from "@/components/segmented";
 import { StatusBadge } from "@/components/status-badge";
 import { api, uid } from "@/lib/client";
 import { DEFAULT_PAYMENT_METHOD, parseCsv, parsePaymentMethods } from "@/lib/validation";
@@ -209,33 +210,29 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
   return (
     <div>
       <PageHeader
-        eyebrow={mode === "simple" ? "Single or multi-panel credit" : "Campaign distribution"}
-        title={mode === "simple" ? "Add Funds" : "Bulk Fund Distribution"}
-        description="Credits are sent only through each panel's Admin API. Nothing is written to a remote panel database."
+        eyebrow={mode === "simple" ? "Credit" : "Campaign"}
+        title={mode === "simple" ? "Add Funds" : "Bulk Distribution"}
+        description="Credits go through each panel Admin API. Nothing is written to a remote panel database."
       />
 
-      <div className="mb-5 flex gap-2">
-        <button
-          className={workflow === "SAME_USER" ? "btn-primary" : "btn-secondary"}
-          onClick={() => setWorkflow("SAME_USER")}
-        >
-          Same username
-        </button>
-        <button
-          className={workflow === "MIXED_ROWS" ? "btn-primary" : "btn-secondary"}
-          onClick={() => setWorkflow("MIXED_ROWS")}
-        >
-          Different users
-        </button>
+      <div className="mb-5">
+        <Segmented
+          value={workflow}
+          onChange={setWorkflow}
+          options={[
+            { value: "SAME_USER", label: "Same user" },
+            { value: "MIXED_ROWS", label: "Different users" },
+          ]}
+        />
       </div>
 
-      <div className="card p-5">
-        <label className="block text-sm text-slate-300">
+      <div className="card p-4 sm:p-5">
+        <label className="field-label">
           Batch name
           <input
-            className="field mt-1"
+            className="field"
             value={batchName}
-            placeholder="October User Bonus Distribution"
+            placeholder="October user bonus"
             onChange={(event) => setBatchName(event.target.value)}
           />
         </label>
@@ -243,40 +240,43 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
         {workflow === "SAME_USER" ? (
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <p className="text-sm text-slate-300">Select panels</p>
-              <div className="mt-2 grid gap-2 md:grid-cols-2">
-                {panels.map((panel) => (
-                  <label key={panel.id} className="flex items-center justify-between rounded-xl border border-white/10 px-3 py-2">
-                    <span>
-                      <input
-                        type="checkbox"
-                        className="mr-2"
-                        checked={selectedPanels.includes(panel.id)}
-                        onChange={() => togglePanel(panel.id)}
-                      />
-                      {panel.name}
-                    </span>
-                    <StatusBadge value={panel.connectionStatus} />
-                  </label>
-                ))}
+              <p className="field-label">Panels</p>
+              <div className="mt-2 grid gap-2">
+                {panels.map((panel) => {
+                  const on = selectedPanels.includes(panel.id);
+                  return (
+                    <button
+                      key={panel.id}
+                      type="button"
+                      className={on ? "panel-pick panel-pick-on" : "panel-pick"}
+                      onClick={() => togglePanel(panel.id)}
+                    >
+                      <span>
+                        <span className="block font-semibold">{panel.name}</span>
+                        <span className="muted">{panel.currency}</span>
+                      </span>
+                      <StatusBadge value={panel.connectionStatus} />
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <label className="text-sm text-slate-300">
+            <label className="field-label">
               Username
-              <input className="field mt-1" value={username} onChange={(event) => setUsername(event.target.value)} />
+              <input className="field" autoCapitalize="none" value={username} onChange={(event) => setUsername(event.target.value)} />
             </label>
-            <label className="text-sm text-slate-300">
+            <label className="field-label">
               Amount
-              <input className="field mt-1" value={amount} onChange={(event) => setAmount(event.target.value)} />
+              <input className="field" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} />
             </label>
             {selectedPanels.map((panelId) => {
               const panel = panels.find((item) => item.id === panelId);
               const methods = panelMethodsList(panel);
               return (
-                <label key={panelId} className="text-sm text-slate-300">
-                  Payment method{selectedPanels.length > 1 ? ` — ${panel?.name ?? "panel"}` : ""}
+                <label key={panelId} className="field-label">
+                  Method{selectedPanels.length > 1 ? ` · ${panel?.name ?? "panel"}` : ""}
                   <select
-                    className="field mt-1"
+                    className="field"
                     value={panelMethods[panelId] ?? methods[0] ?? DEFAULT_PAYMENT_METHOD}
                     onChange={(event) => setPanelMethods((current) => ({ ...current, [panelId]: event.target.value }))}
                   >
@@ -289,11 +289,11 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
                 </label>
               );
             })}
-            <label className="text-sm text-slate-300">
+            <label className="field-label">
               Memo
-              <input className="field mt-1" value={memo} onChange={(event) => setMemo(event.target.value)} />
+              <input className="field" value={memo} onChange={(event) => setMemo(event.target.value)} />
             </label>
-            <label className="flex items-center gap-2 text-sm text-slate-300">
+            <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={affiliate} onChange={(event) => setAffiliate(event.target.checked)} />
               Affiliate commission
             </label>
@@ -387,20 +387,12 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
         )}
 
         {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
-        <p className="muted mt-4">
-          After you confirm, this app sends the credit to the panel Admin API. Status and errors are on{" "}
-          <a className="text-mint-400" href="/logs">
-            Activity Log
-          </a>
-          ,{" "}
-          <a className="text-mint-400" href="/history">
-            Payment History
-          </a>
-          , and Batch History.
+        <p className="muted mt-4 max-md:hidden">
+          After confirm, credits go to the panel Admin API. Status is on Activity Log, History, and Batches.
         </p>
-        <div className="mt-6 flex justify-end">
-          <button className="btn-primary" onClick={() => void openConfirm()} disabled={busy}>
-            Review distribution
+        <div className="sticky-action">
+          <button className="btn-primary w-full md:w-auto" onClick={() => void openConfirm()} disabled={busy}>
+            {busy ? "Checking…" : "Review"}
           </button>
         </div>
       </div>

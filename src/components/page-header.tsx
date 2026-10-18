@@ -10,13 +10,13 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-      <div>
-        {eyebrow ? <p className="text-[11px] uppercase tracking-[0.22em] text-mint-400">{eyebrow}</p> : null}
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight">{title}</h2>
-        {description ? <p className="muted mt-1 max-w-2xl">{description}</p> : null}
+    <div className="page-header">
+      <div className="min-w-0">
+        {eyebrow ? <p className="page-kicker">{eyebrow}</p> : null}
+        <h2 className="page-title">{title}</h2>
+        {description ? <p className="page-copy">{description}</p> : null}
       </div>
-      {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+      {actions ? <div className="page-actions">{actions}</div> : null}
     </div>
   );
 }

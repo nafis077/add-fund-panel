@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { TotalsText } from "@/components/money-text";
@@ -31,9 +32,13 @@ export default function BatchesPage() {
 
   return (
     <div>
-      <PageHeader eyebrow="Campaigns" title="Batch history" description="Each bulk submission is a named financial batch with currency-separated totals." />
+      <PageHeader eyebrow="Campaigns" title="Batches" description="Each bulk submission is a named financial batch with currency-separated totals." />
       <div className="grid gap-4">
-        {batches.length === 0 ? <div className="card p-6 muted">No batches yet.</div> : null}
+        {batches.length === 0 ? (
+          <div className="card">
+            <EmptyState title="No batches yet" body="Confirm an Add Funds distribution to create the first one." />
+          </div>
+        ) : null}
         {batches.map((batch) => (
           <Link key={batch.id} href={`/batches/${batch.id}`} className="card p-5 hover:bg-white/5">
             <div className="flex flex-wrap items-center justify-between gap-3">

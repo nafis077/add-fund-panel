@@ -61,7 +61,7 @@ export default function SettingsPage() {
       <PageHeader
         eyebrow="Controls"
         title="Settings"
-        description="High-value batches can require a second administrator. API credentials stay encrypted and server-side only."
+        description="High-value batches can require a second administrator."
       />
       <div className="card mb-6 flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>

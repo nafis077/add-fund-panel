@@ -43,8 +43,8 @@ export function InstallAppPrompt({ compact = false }: { compact?: boolean }) {
   if (!iosPrompt && !installEvent) return null;
 
   return (
-    <div className={`card border-mint-500/30 ${compact ? "p-3" : "p-4"}`}>
-      <p className="text-sm font-medium">Add to Home Screen</p>
+    <div className={`card border-mint-500/30 ${compact ? "p-3" : "p-5"}`}>
+      <p className="text-sm font-semibold">Add to Home Screen</p>
       {iosPrompt ? (
         <p className="muted mt-1">
           On iPhone: tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>. It opens like a native

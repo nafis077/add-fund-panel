@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useActivePanel } from "@/components/active-panel-provider";
+import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { TotalsText } from "@/components/money-text";
@@ -47,57 +49,70 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePanelId]);
 
-  if (!data) return <p className="muted">Loading treasury snapshot…</p>;
+  if (!data) {
+    return (
+      <div className="stat-grid">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="card stat-card h-28 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
 
-  const cards = [
-    ["Total panels", data.cards.totalPanels],
-    ["Active panels", data.cards.activePanels],
-    ["Transactions today", data.cards.transactionsToday],
-    ["Completed", data.cards.completed],
-    ["Failed", data.cards.failed],
-    ["Needs verification", data.cards.needsVerification],
+  const metrics = [
+    ["Today", data.cards.transactionsToday, ""],
+    ["Completed", data.cards.completed, ""],
+    ["Failed", data.cards.failed, "stat-rose"],
+    ["Needs check", data.cards.needsVerification, "stat-amber"],
+    ["Panels", data.cards.totalPanels, ""],
+    ["Active", data.cards.activePanels, ""],
   ] as const;
 
   return (
     <div>
       <PageHeader
         eyebrow="Overview"
-        title="Fund operations dashboard"
+        title="Home"
         description={
           activePanel
             ? `Showing ${activePanel.name}. Switch panels from the top bar.`
-            : "Live totals stay separated by currency. Remote credits only appear as completed after a confirmed Admin API response."
-        }
-        actions={
-          <>
-            <input className="field" type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
-            <input className="field" type="date" value={to} onChange={(event) => setTo(event.target.value)} />
-            <button className="btn-secondary" onClick={() => void load()}>
-              Apply
-            </button>
-          </>
+            : "Live totals stay separated by currency."
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-4">
-        <div className="card p-5 md:col-span-2">
-          <p className="muted">Total fund added</p>
-          <p className="mt-2 text-3xl font-semibold">
-            <TotalsText totals={data.cards.fundsAdded} empty="No confirmed credits" />
+      <div className="card mb-4 grid gap-3 p-3 sm:grid-cols-[1fr_1fr_auto]">
+        <label className="field-label">
+          From
+          <input className="field" type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
+        </label>
+        <label className="field-label">
+          To
+          <input className="field" type="date" value={to} onChange={(event) => setTo(event.target.value)} />
+        </label>
+        <button className="btn-secondary self-end" onClick={() => void load()}>
+          Apply
+        </button>
+      </div>
+
+      <div className="stat-grid">
+        <div className="card stat-card stat-hero">
+          <p className="stat-kicker muted">Total fund added</p>
+          <p className="stat-value">
+            <TotalsText totals={data.cards.fundsAdded} empty="No credits yet" />
           </p>
         </div>
-        {cards.map(([label, value]) => (
-          <div key={label} className="card p-5">
-            <p className="muted">{label}</p>
-            <p className="mt-2 text-3xl font-semibold">{value}</p>
+        {metrics.map(([label, value, tone]) => (
+          <div key={label} className={`card stat-card ${tone}`}>
+            <p className="stat-kicker muted">{label}</p>
+            <p className="stat-value">{value}</p>
           </div>
         ))}
       </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-2">
         <div className="card p-5">
-          <h3 className="mb-4 font-medium">Payment activity over time</h3>
-          <div className="h-64">
+          <h3 className="mb-4 font-medium">Activity</h3>
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.charts.daily}>
                 <CartesianGrid stroke="var(--grid)" />
@@ -111,8 +126,8 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="card p-5">
-          <h3 className="mb-4 font-medium">Payment volume by panel</h3>
-          <div className="h-64">
+          <h3 className="mb-4 font-medium">Volume by panel</h3>
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.charts.volumeByPanel}>
                 <CartesianGrid stroke="var(--grid)" />
@@ -128,8 +143,18 @@ export default function DashboardPage() {
 
       <div className="mt-6 grid gap-4 xl:grid-cols-3">
         <div className="card p-5">
-          <h3 className="mb-3 font-medium">Latest fund additions</h3>
-          {data.recentCompleted.length === 0 ? <p className="muted">No completed credits yet.</p> : null}
+          <h3 className="mb-3 font-medium">Latest credits</h3>
+          {data.recentCompleted.length === 0 ? (
+            <EmptyState
+              title="No credits yet"
+              body="Send the first one from Add Funds."
+              action={
+                <Link className="btn-primary" href="/funds">
+                  Add funds
+                </Link>
+              }
+            />
+          ) : null}
           {data.recentCompleted.map((item) => (
             <p key={item.id} className="border-t border-white/5 py-2 text-sm">
               {item.panel.name} · {item.username} · {item.currency} {item.amount}
@@ -138,7 +163,7 @@ export default function DashboardPage() {
         </div>
         <div className="card p-5">
           <h3 className="mb-3 font-medium">Recent failures</h3>
-          {data.recentFailed.length === 0 ? <p className="muted">No failed operations.</p> : null}
+          {data.recentFailed.length === 0 ? <EmptyState title="No failures" body="Failed credits will show here." /> : null}
           {data.recentFailed.map((item) => (
             <p key={item.id} className="border-t border-white/5 py-2 text-sm">
               {item.panel.name} · {item.username}
@@ -148,7 +173,7 @@ export default function DashboardPage() {
         </div>
         <div className="card p-5">
           <h3 className="mb-3 font-medium">Active batches</h3>
-          {data.activeBatches.length === 0 ? <p className="muted">No batches in flight.</p> : null}
+          {data.activeBatches.length === 0 ? <EmptyState title="Nothing in flight" /> : null}
           {data.activeBatches.map((batch) => (
             <a key={batch.id} href={`/batches/${batch.id}`} className="block border-t border-white/5 py-2">
               <div className="flex items-center justify-between gap-2">

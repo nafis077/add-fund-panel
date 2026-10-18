@@ -38,14 +38,26 @@ export function ConfirmModal({
   const warnings = issues.filter((issue) => issue.level === "warning");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="card w-full max-w-xl p-6">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-mint-400">Review before execution</p>
+    <div className="sheet-scrim" onClick={onCancel}>
+      <div className="card sheet" onClick={(event) => event.stopPropagation()}>
+        <p className="page-kicker">Review before sending</p>
         <h3 className="mt-2 text-xl font-semibold">{title}</h3>
         <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-          <div className="rounded-xl bg-white/5 p-3">Panels<br /><strong>{panelCount}</strong></div>
-          <div className="rounded-xl bg-white/5 p-3">Recipients<br /><strong>{recipientCount}</strong></div>
-          <div className="rounded-xl bg-white/5 p-3">Transactions<br /><strong>{transactionCount}</strong></div>
+          <div className="rounded-xl bg-white/5 p-3">
+            Panels
+            <br />
+            <strong>{panelCount}</strong>
+          </div>
+          <div className="rounded-xl bg-white/5 p-3">
+            Recipients
+            <br />
+            <strong>{recipientCount}</strong>
+          </div>
+          <div className="rounded-xl bg-white/5 p-3">
+            Transactions
+            <br />
+            <strong>{transactionCount}</strong>
+          </div>
           <div className="rounded-xl bg-white/5 p-3">
             Total
             <br />
@@ -59,9 +71,7 @@ export function ConfirmModal({
           </p>
         ) : null}
         {highValue ? (
-          <p className="mt-2 text-sm text-orange-200">
-            Confirm the full financial impact before sending funds to remote panels.
-          </p>
+          <p className="mt-2 text-sm text-orange-200">Confirm the full amount before sending funds.</p>
         ) : null}
         {warnings.length > 0 ? (
           <div className="mt-4 space-y-1 text-sm text-amber-200">
@@ -81,12 +91,12 @@ export function ConfirmModal({
             <StatusBadge value="QUEUED" />
           </div>
         )}
-        <div className="mt-6 flex justify-end gap-2">
+        <div className="mt-6 grid grid-cols-2 gap-2">
           <button className="btn-secondary" onClick={onCancel} disabled={busy}>
             Back
           </button>
           <button className="btn-primary" onClick={onConfirm} disabled={busy || errors.length > 0}>
-            {busy ? "Submitting…" : "Confirm and queue"}
+            {busy ? "Submitting…" : "Confirm"}
           </button>
         </div>
       </div>

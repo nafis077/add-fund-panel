@@ -54,39 +54,35 @@ function LoginForm() {
   }
 
   return (
-    <div className="relative flex min-h-dvh items-center justify-center p-6">
+    <div className="relative flex min-h-dvh items-center justify-center p-5">
       <div className="absolute right-4 top-4" style={{ top: "max(1rem, env(safe-area-inset-top))" }}>
         <ThemeToggle compact />
       </div>
       <div className="w-full max-w-md space-y-4">
-        <form onSubmit={(event) => void onSubmit(event)} className="card w-full p-8">
-        <p className="text-[11px] uppercase tracking-[0.24em] text-mint-400">Panel Treasury</p>
-        <h1 className="mt-2 text-2xl font-semibold">Administrator sign in</h1>
-        <p className="muted mt-2">Centralized fund control for connected SMM panels.</p>
-        <label className="mt-6 block text-sm text-slate-300">
-          Email
-          <input className="field mt-1" value={email} onChange={(event) => setEmail(event.target.value)} />
-        </label>
-        <label className="mt-4 block text-sm text-slate-300">
-          Password
-          <input
-            className="field mt-1"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-        </label>
-        {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
+        <form onSubmit={(event) => void onSubmit(event)} className="card w-full p-6 sm:p-8">
+          <p className="page-kicker">Panel Treasury</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Sign in</h1>
+          <p className="muted mt-2">Fund control for your connected SMM panels.</p>
+          <label className="field-label mt-7">
+            Email
+            <input className="field" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} />
+          </label>
+          <label className="field-label mt-4">
+            Password
+            <input
+              className="field"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </label>
+          {error ? <p className="mt-4 text-sm text-rose-300">{error}</p> : null}
           <button className="btn-primary mt-6 w-full" disabled={busy}>
             {busy ? "Signing in…" : "Sign in"}
           </button>
           {faceIdEnabled ? (
-            <button
-              type="button"
-              className="btn-secondary mt-2 w-full"
-              disabled={busy}
-              onClick={() => void unlockFaceId()}
-            >
+            <button type="button" className="btn-secondary mt-2 w-full" disabled={busy} onClick={() => void unlockFaceId()}>
               {busy ? "Waiting for Face ID…" : biometricLabel()}
             </button>
           ) : null}
