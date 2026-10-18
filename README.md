@@ -109,14 +109,14 @@ Railway needs **PostgreSQL**. Do not rely on SQLite there — Railway disks are 
 1. Push this branch to GitHub.
 2. In [Railway](https://railway.app) create a new project → **Deploy from GitHub repo**.
 3. Add a **PostgreSQL** plugin to the same project. Railway will inject `DATABASE_URL`.
-4. In the web service **Variables**, set:
+4. In the web service **Variables**, set at least a Postgres plugin so `DATABASE_URL` exists. These are optional but recommended:
 
 | Variable | Example |
 |---|---|
-| `AUTH_SECRET` | long random string (`openssl rand -base64 48`) |
-| `ENCRYPTION_KEY` | 64 hex chars (`openssl rand -hex 32`) |
-| `ADMIN_EMAIL` | your login email |
-| `ADMIN_PASSWORD` | a strong password, not `ChangeMeNow!` |
+| `AUTH_SECRET` | long random string (`openssl rand -base64 48`) — auto-derived if unset |
+| `ENCRYPTION_KEY` | 64 hex chars (`openssl rand -hex 32`) — auto-derived if unset; pin this before saving panel keys if you may recreate the Railway service |
+| `ADMIN_EMAIL` | your login email (defaults to `admin@localhost`) |
+| `ADMIN_PASSWORD` | a strong password; if unset, first boot logs a generated password |
 | `ADMIN_NAME` | `Treasury Admin` |
 | `NEXT_PUBLIC_APP_NAME` | `Panel Treasury` |
 
@@ -127,7 +127,7 @@ Leave `DATABASE_URL` to the Postgres plugin. Do not paste a `file:` SQLite URL.
    - Health check: `GET /api/health`
    - Node 22 via Nixpacks
 6. Generate a public domain under **Settings → Networking → Generate Domain**.
-7. Open the domain and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
+7. Open the domain and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` (or the generated password printed once in Deploy Logs as `[boot] Created ... with a generated password`).
 
 The first boot runs `prisma migrate deploy` against Postgres and creates the admin user only if that email does not already exist. Later deploys will not reset the password.
 
