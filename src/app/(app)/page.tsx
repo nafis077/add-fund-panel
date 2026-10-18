@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useActivePanel } from "@/components/active-panel-provider";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { TotalsText } from "@/components/money-text";
@@ -28,6 +29,7 @@ type Dashboard = {
 };
 
 export default function DashboardPage() {
+  const { activePanelId, activePanel } = useActivePanel();
   const [data, setData] = useState<Dashboard | null>(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -36,13 +38,14 @@ export default function DashboardPage() {
     const params = new URLSearchParams();
     if (from) params.set("from", from);
     if (to) params.set("to", to);
+    if (activePanelId) params.set("panelId", activePanelId);
     setData(await api<Dashboard>(`/api/dashboard?${params}`));
   }
 
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activePanelId]);
 
   if (!data) return <p className="muted">Loading treasury snapshot…</p>;
 
@@ -60,7 +63,11 @@ export default function DashboardPage() {
       <PageHeader
         eyebrow="Overview"
         title="Fund operations dashboard"
-        description="Live totals stay separated by currency. Remote credits only appear as completed after a confirmed Admin API response."
+        description={
+          activePanel
+            ? `Showing ${activePanel.name}. Switch panels from the top bar.`
+            : "Live totals stay separated by currency. Remote credits only appear as completed after a confirmed Admin API response."
+        }
         actions={
           <>
             <input className="field" type="date" value={from} onChange={(event) => setFrom(event.target.value)} />

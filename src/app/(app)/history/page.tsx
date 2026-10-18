@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useActivePanel } from "@/components/active-panel-provider";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { MoneyText } from "@/components/money-text";
@@ -35,6 +36,7 @@ type RemoteItem = {
 };
 
 export default function HistoryPage() {
+  const { activePanelId, setActivePanelId } = useActivePanel();
   const [tab, setTab] = useState<"local" | "remote">("local");
   const [panels, setPanels] = useState<Array<{ id: string; name: string }>>([]);
   const [local, setLocal] = useState<LocalItem[]>([]);
@@ -58,11 +60,17 @@ export default function HistoryPage() {
   }, []);
 
   useEffect(() => {
+    if (activePanelId) {
+      setFilters((current) => ({ ...current, panelId: activePanelId }));
+    }
+  }, [activePanelId]);
+
+  useEffect(() => {
     void refresh();
     const timer = setInterval(() => void refresh(), 4000);
     return () => clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab]);
+  }, [tab, filters.panelId]);
 
   async function refresh() {
     setError("");
@@ -118,7 +126,14 @@ export default function HistoryPage() {
         </button>
       </div>
       <div className="card mb-4 grid gap-3 p-4 md:grid-cols-4">
-        <select className="field" value={filters.panelId} onChange={(event) => setFilters({ ...filters, panelId: event.target.value })}>
+        <select
+          className="field"
+          value={filters.panelId}
+          onChange={(event) => {
+            setFilters({ ...filters, panelId: event.target.value });
+            if (event.target.value) setActivePanelId(event.target.value);
+          }}
+        >
           <option value="">All panels</option>
           {panels.map((panel) => (
             <option key={panel.id} value={panel.id}>

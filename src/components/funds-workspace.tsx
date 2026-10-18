@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useActivePanel } from "@/components/active-panel-provider";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -53,6 +54,7 @@ function emptyRow(panelId = "", method = DEFAULT_PAYMENT_METHOD): PaymentRowInpu
 
 export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
   const router = useRouter();
+  const { activePanelId, setActivePanelId } = useActivePanel();
   const [panels, setPanels] = useState<Panel[]>([]);
   const [workflow, setWorkflow] = useState<Workflow>(mode === "simple" ? "SAME_USER" : "MIXED_ROWS");
   const [selectedPanels, setSelectedPanels] = useState<string[]>([]);
@@ -76,7 +78,12 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
         Object.fromEntries(payload.panels.map((panel) => [panel.id, firstPanelMethod(panel)])),
       );
       const defaults = payload.panels.filter((panel) => panel.isDefault && panel.isActive).map((panel) => panel.id);
-      const initial = defaults.length ? defaults : payload.panels.filter((panel) => panel.isActive).slice(0, 1).map((p) => p.id);
+      const fromTopBar = activePanelId && payload.panels.some((panel) => panel.id === activePanelId) ? [activePanelId] : [];
+      const initial = fromTopBar.length
+        ? fromTopBar
+        : defaults.length
+          ? defaults
+          : payload.panels.filter((panel) => panel.isActive).slice(0, 1).map((p) => p.id);
       setSelectedPanels(initial);
       if (payload.panels[0] && rows.length === 1 && !rows[0].panelId) {
         const startPanel = payload.panels.find((panel) => panel.id === initial[0]) ?? payload.panels[0];
@@ -101,8 +108,25 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
     return rows;
   }, [workflow, selectedPanels, username, amount, panelMethods, memo, affiliate, rows, submissionId, panels]);
 
+  useEffect(() => {
+    if (!activePanelId) return;
+    setSelectedPanels((current) => (current.includes(activePanelId) ? current : [activePanelId]));
+    setRows((current) => {
+      const panel = panels.find((item) => item.id === activePanelId);
+      if (current.length === 1) {
+        return [{ ...current[0], panelId: activePanelId, method: firstPanelMethod(panel) }];
+      }
+      return current;
+    });
+  }, [activePanelId, panels]);
+
   function togglePanel(id: string) {
-    setSelectedPanels((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+    setSelectedPanels((current) => {
+      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+      const preferred = next.includes(id) ? id : next[0];
+      if (preferred) setActivePanelId(preferred);
+      return next;
+    });
     setPanelMethods((current) => {
       if (current[id]) return current;
       const panel = panels.find((item) => item.id === id);
@@ -116,6 +140,7 @@ export function FundsWorkspace({ mode }: { mode: "simple" | "bulk" }) {
         if (row.clientRowId !== id) return row;
         if (patch.panelId && patch.panelId !== row.panelId) {
           const nextPanel = panels.find((panel) => panel.id === patch.panelId);
+          setActivePanelId(patch.panelId);
           return { ...row, ...patch, method: firstPanelMethod(nextPanel) };
         }
         return { ...row, ...patch };
