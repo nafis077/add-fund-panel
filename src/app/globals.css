@@ -128,9 +128,9 @@ button {
   position: sticky;
   top: 0;
   z-index: 30;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(8rem, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
   padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.75rem;
   border-bottom: 1px solid var(--card-border);
@@ -138,10 +138,39 @@ button {
   backdrop-filter: blur(16px);
 }
 
+.app-top-bar-brand {
+  min-width: 0;
+}
+
+.app-top-bar-tools {
+  display: flex;
+  align-items: center;
+}
+
 .panel-switcher {
   position: relative;
   min-width: 0;
-  flex: 1;
+}
+
+@media (max-width: 767px) {
+  .app-top-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand tools"
+      "switcher switcher";
+  }
+
+  .app-top-bar-brand {
+    grid-area: brand;
+  }
+
+  .app-top-bar .panel-switcher {
+    grid-area: switcher;
+  }
+
+  .app-top-bar-tools {
+    grid-area: tools;
+  }
 }
 
 .panel-switcher-select {

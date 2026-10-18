@@ -6,12 +6,12 @@ import { PanelSwitcher } from "@/components/panel-switcher";
 export function AppTopBar({ userName }: { userName: string }) {
   return (
     <header className="app-top-bar">
-      <div className="min-w-0">
+      <div className="app-top-bar-brand">
         <p className="text-[11px] uppercase tracking-[0.24em] text-mint-400">Panel Treasury</p>
         <p className="truncate text-sm text-slate-400">{userName}</p>
       </div>
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:max-w-md">
-        <PanelSwitcher />
+      <PanelSwitcher />
+      <div className="app-top-bar-tools">
         <ThemeToggle compact />
       </div>
     </header>

@@ -31,7 +31,9 @@ export function PanelSwitcher({ compact = false }: { compact?: boolean }) {
       <span className="panel-switcher-face">
         <span className="panel-switcher-copy">
           {!compact ? <span className="panel-switcher-kicker">Working on</span> : null}
-          <span className="panel-switcher-name">{activePanel?.name ?? "Select panel"}</span>
+          <span className="panel-switcher-name">
+            {activePanel ? `${activePanel.name}${activePanel.currency ? ` · ${activePanel.currency}` : ""}` : "Select panel"}
+          </span>
         </span>
         <ChevronDown size={16} />
       </span>

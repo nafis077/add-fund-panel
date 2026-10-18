@@ -13,6 +13,7 @@ import {
   ScrollText,
   LogOut,
 } from "lucide-react";
+import { PanelSwitcher } from "@/components/panel-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const LINKS = [
@@ -40,6 +41,9 @@ export function Sidebar({ user }: { user: { name: string; role: string } }) {
         <p className="text-[11px] uppercase tracking-[0.24em] text-mint-400">Central ledger</p>
         <h1 className="mt-1 text-xl font-semibold">Panel Treasury</h1>
         <p className="muted mt-1">Multi-panel fund control</p>
+        <div className="mt-4">
+          <PanelSwitcher />
+        </div>
       </div>
       <nav className="flex-1 space-y-1">
         {LINKS.map((link) => {
