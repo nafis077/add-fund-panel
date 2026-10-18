@@ -52,7 +52,9 @@ body {
 
 body {
   margin: 0;
-  font-feature-settings: "liga" 0, "clig" 0;
+  font-variant-ligatures: none;
+  -webkit-font-feature-settings: "liga" 0, "clig" 0, "calt" 0;
+  font-feature-settings: "liga" 0, "clig" 0, "calt" 0;
   background:
     radial-gradient(1200px 500px at 10% -10%, var(--bg-accent-a), transparent 50%),
     radial-gradient(900px 400px at 100% 0%, var(--bg-accent-b), transparent 45%),
