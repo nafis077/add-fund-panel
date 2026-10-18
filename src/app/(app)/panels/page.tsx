@@ -104,7 +104,7 @@ export default function PanelsPage() {
         description="API keys are encrypted at rest and never returned to the browser."
       />
       <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
-        <form className="card p-5" onSubmit={(event) => void save(event)}>
+        <form className="card order-2 p-5 xl:order-1" onSubmit={(event) => void save(event)}>
           <h3 className="font-medium">{editing ? "Edit panel" : "Add panel"}</h3>
           <label className="field-label mt-4">
             Name
@@ -164,7 +164,7 @@ export default function PanelsPage() {
           <button className="btn-primary mt-4 w-full">{editing ? "Update panel" : "Save panel"}</button>
         </form>
 
-        <div className="card p-5">
+        <div className="card order-1 p-5 xl:order-2">
           <div className="mb-4 flex gap-2">
             <input className="field" placeholder="Search panels" value={query} onChange={(event) => setQuery(event.target.value)} />
             <button className="btn-secondary" onClick={() => void load()}>

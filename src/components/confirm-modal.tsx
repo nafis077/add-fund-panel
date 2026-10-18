@@ -91,7 +91,7 @@ export function ConfirmModal({
             <StatusBadge value="QUEUED" />
           </div>
         )}
-        <div className="mt-6 grid grid-cols-2 gap-2">
+        <div className="mt-6 grid grid-cols-2 gap-2 pb-12 md:pb-0">
           <button className="btn-secondary" onClick={onCancel} disabled={busy}>
             Back
           </button>

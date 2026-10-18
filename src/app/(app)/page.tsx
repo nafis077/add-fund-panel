@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [datesOpen, setDatesOpen] = useState(false);
 
   async function load() {
     const params = new URLSearchParams();
@@ -80,7 +81,12 @@ export default function DashboardPage() {
         }
       />
 
-      <div className="card mb-4 grid gap-3 p-3 sm:grid-cols-[1fr_1fr_auto]">
+      <div className="mb-3 md:hidden">
+        <button className="btn-secondary w-full" onClick={() => setDatesOpen((open) => !open)}>
+          {datesOpen ? "Hide dates" : "Filter dates"}
+        </button>
+      </div>
+      <div className={`card mb-4 grid gap-3 p-3 sm:grid-cols-[1fr_1fr_auto] ${datesOpen ? "" : "max-md:hidden"}`}>
         <label className="field-label">
           From
           <input className="field" type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
