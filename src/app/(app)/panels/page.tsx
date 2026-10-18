@@ -5,8 +5,10 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { TotalsText } from "@/components/money-text";
-import { api } from "@/lib/client";
+import { api, uid } from "@/lib/client";
 import { formatMethodChoice, parsePaymentMethodOptions, type PaymentMethodOption } from "@/lib/validation";
+
+type MethodDraft = PaymentMethodOption & { rowId: string };
 
 type Panel = {
   id: string;
@@ -28,44 +30,83 @@ type Panel = {
   fundsAdded: Record<string, string>;
 };
 
-const emptyForm = {
-  name: "",
-  baseUrl: "",
-  apiKey: "",
-  currency: "USD",
-  isDefault: false,
-  concurrencyLimit: 2,
-  minRequestIntervalMs: 250,
-  paymentMethods: [{ apiName: "Admin Credit", label: "Admin Credit" }] as PaymentMethodOption[],
-};
+function methodDraft(method: PaymentMethodOption): MethodDraft {
+  return { rowId: uid(), apiName: method.apiName, label: method.label };
+}
+
+function emptyForm() {
+  return {
+    name: "",
+    baseUrl: "",
+    apiKey: "",
+    currency: "USD",
+    isDefault: false,
+    concurrencyLimit: 2,
+    minRequestIntervalMs: 250,
+    paymentMethods: [methodDraft({ apiName: "Admin Credit", label: "Admin Credit" })],
+  };
+}
+
+function preparedMethods(methods: MethodDraft[]): PaymentMethodOption[] {
+  const seen = new Set<string>();
+  const result: PaymentMethodOption[] = [];
+  for (const method of methods) {
+    const apiName = method.apiName.trim();
+    if (!apiName) continue;
+    const key = apiName.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push({ apiName, label: method.label.trim() || apiName });
+  }
+  return result;
+}
 
 export default function PanelsPage() {
   const [panels, setPanels] = useState<Panel[]>([]);
   const [query, setQuery] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState<string | null>(null);
-  const [methodApiDraft, setMethodApiDraft] = useState("");
-  const [methodLabelDraft, setMethodLabelDraft] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   function addPaymentMethod() {
-    const apiName = methodApiDraft.trim();
-    const label = methodLabelDraft.trim() || apiName;
-    if (!apiName) return;
-    setForm((current) => {
-      const exists = current.paymentMethods.some((item) => item.apiName.toLowerCase() === apiName.toLowerCase());
-      return exists ? current : { ...current, paymentMethods: [...current.paymentMethods, { apiName, label }] };
-    });
-    setMethodApiDraft("");
-    setMethodLabelDraft("");
-  }
-
-  function removePaymentMethod(apiName: string) {
     setForm((current) => ({
       ...current,
-      paymentMethods: current.paymentMethods.filter((item) => item.apiName !== apiName),
+      paymentMethods: [...current.paymentMethods, methodDraft({ apiName: "", label: "" })],
     }));
+  }
+
+  function updatePaymentMethod(rowId: string, field: "apiName" | "label", value: string) {
+    setForm((current) => ({
+      ...current,
+      paymentMethods: current.paymentMethods.map((item) =>
+        item.rowId === rowId ? { ...item, [field]: value } : item,
+      ),
+    }));
+  }
+
+  function removePaymentMethod(rowId: string) {
+    setForm((current) => {
+      const paymentMethods = current.paymentMethods.filter((item) => item.rowId !== rowId);
+      return {
+        ...current,
+        paymentMethods: paymentMethods.length ? paymentMethods : [methodDraft({ apiName: "", label: "" })],
+      };
+    });
+  }
+
+  function startEdit(panel: Panel) {
+    setEditing(panel.id);
+    setForm({
+      name: panel.name,
+      baseUrl: panel.baseUrl,
+      apiKey: "",
+      currency: panel.currency,
+      isDefault: panel.isDefault,
+      concurrencyLimit: panel.concurrencyLimit,
+      minRequestIntervalMs: panel.minRequestIntervalMs,
+      paymentMethods: parsePaymentMethodOptions(panel.paymentMethods).map(methodDraft),
+    });
   }
 
   async function load() {
@@ -81,18 +122,19 @@ export default function PanelsPage() {
   async function save(event: FormEvent) {
     event.preventDefault();
     setError("");
-    if (!form.paymentMethods.length) {
+    const paymentMethods = preparedMethods(form.paymentMethods);
+    if (!paymentMethods.length) {
       setError("Add at least one payment method for this panel");
       return;
     }
     try {
-      const payload = { ...form, apiKey: form.apiKey.trim() || undefined };
+      const payload = { ...form, paymentMethods, apiKey: form.apiKey.trim() || undefined };
       if (editing) {
         await api(`/api/panels/${editing}`, { method: "PATCH", body: JSON.stringify(payload) });
       } else {
         await api("/api/panels", { method: "POST", body: JSON.stringify(payload) });
       }
-      setForm(emptyForm);
+      setForm(emptyForm());
       setEditing(null);
       await load();
     } catch (err) {
@@ -129,50 +171,44 @@ export default function PanelsPage() {
           <div className="mt-3">
             <p className="text-sm font-medium">Payment methods</p>
             <p className="muted mt-1 text-xs">
-              API name is sent to the panel. Display name is what you pick on Add Funds, for example API
-              <code> manual</code> and display <code> USDT</code>.
+              Type the API name and the shown name in separate boxes. API name is sent to the panel
+              (for example <code>manual</code>). Shown name is what you pick on Add Funds (for example{" "}
+              <code>USDT</code>).
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-3 space-y-3">
               {form.paymentMethods.map((method) => (
-                <button
-                  key={method.apiName}
-                  type="button"
-                  className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs"
-                  onClick={() => removePaymentMethod(method.apiName)}
-                >
-                  {formatMethodChoice(method)} ×
-                </button>
+                <div key={method.rowId} className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <label className="field-label">
+                    API name
+                    <input
+                      className="field"
+                      placeholder="manual"
+                      value={method.apiName}
+                      onChange={(event) => updatePaymentMethod(method.rowId, "apiName", event.target.value)}
+                    />
+                  </label>
+                  <label className="field-label mt-3">
+                    Shown name
+                    <input
+                      className="field"
+                      placeholder="USDT"
+                      value={method.label}
+                      onChange={(event) => updatePaymentMethod(method.rowId, "label", event.target.value)}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    className="btn-secondary mt-3 w-full"
+                    onClick={() => removePaymentMethod(method.rowId)}
+                  >
+                    Remove method
+                  </button>
+                </div>
               ))}
             </div>
-            <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-              <input
-                className="field"
-                placeholder="API name (manual)"
-                value={methodApiDraft}
-                onChange={(event) => setMethodApiDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    addPaymentMethod();
-                  }
-                }}
-              />
-              <input
-                className="field"
-                placeholder="Display name (USDT)"
-                value={methodLabelDraft}
-                onChange={(event) => setMethodLabelDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    addPaymentMethod();
-                  }
-                }}
-              />
-              <button type="button" className="btn-secondary" onClick={addPaymentMethod}>
-                Add
-              </button>
-            </div>
+            <button type="button" className="btn-secondary mt-3 w-full" onClick={addPaymentMethod}>
+              Add method
+            </button>
           </div>
           <label className="mt-3 flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.isDefault} onChange={(event) => setForm({ ...form, isDefault: event.target.checked })} />
@@ -212,24 +248,7 @@ export default function PanelsPage() {
                   {panel.totalTransactions} tx · <TotalsText totals={panel.fundsAdded} />
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button
-                    className="btn-secondary"
-                    onClick={() => {
-                      setEditing(panel.id);
-                      setForm({
-                        name: panel.name,
-                        baseUrl: panel.baseUrl,
-                        apiKey: "",
-                        currency: panel.currency,
-                        isDefault: panel.isDefault,
-                        concurrencyLimit: panel.concurrencyLimit,
-                        minRequestIntervalMs: panel.minRequestIntervalMs,
-                        paymentMethods: parsePaymentMethodOptions(panel.paymentMethods),
-                      });
-                      setMethodApiDraft("");
-                      setMethodLabelDraft("");
-                    }}
-                  >
+                  <button className="btn-secondary" onClick={() => startEdit(panel)}>
                     Edit
                   </button>
                   <button
@@ -303,24 +322,7 @@ export default function PanelsPage() {
                       >
                         Test
                       </button>
-                      <button
-                        className="btn-secondary w-full"
-                        onClick={() => {
-                          setEditing(panel.id);
-                          setForm({
-                            name: panel.name,
-                            baseUrl: panel.baseUrl,
-                            apiKey: "",
-                            currency: panel.currency,
-                            isDefault: panel.isDefault,
-                            concurrencyLimit: panel.concurrencyLimit,
-                            minRequestIntervalMs: panel.minRequestIntervalMs,
-                            paymentMethods: parsePaymentMethodOptions(panel.paymentMethods),
-                          });
-                          setMethodApiDraft("");
-                          setMethodLabelDraft("");
-                        }}
-                      >
+                      <button className="btn-secondary w-full" onClick={() => startEdit(panel)}>
                         Edit
                       </button>
                       <button
