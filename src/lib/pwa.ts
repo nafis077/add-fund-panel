@@ -30,3 +30,10 @@ export function shouldPromptIosInstall(input: {
 export function themeColorFor(theme: "light" | "dark"): string {
   return theme === "light" ? "#f3f6fb" : "#070b14";
 }
+
+export function biometricLabel(userAgent: string): string {
+  if (/iphone|ipad|ipod/i.test(userAgent)) return "Unlock with Face ID";
+  if (/mac/i.test(userAgent)) return "Unlock with Touch ID";
+  if (/android/i.test(userAgent)) return "Unlock with fingerprint";
+  return "Unlock with device biometrics";
+}
