@@ -1,10 +1,12 @@
 import { requirePermission } from "@/lib/auth";
 import { handleRouteError, json } from "@/lib/http";
+import { ensureWorker } from "@/lib/worker-runtime";
 import { getDashboard } from "@/server/dashboard";
 
 export async function GET(request: Request) {
   try {
     await requirePermission("payments.view");
+    ensureWorker();
     const params = new URL(request.url).searchParams;
     return json(
       await getDashboard({
