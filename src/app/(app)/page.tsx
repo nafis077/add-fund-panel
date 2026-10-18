@@ -93,9 +93,9 @@ export default function DashboardPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.charts.daily}>
-                <CartesianGrid stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="date" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
+                <CartesianGrid stroke="var(--grid)" />
+                <XAxis dataKey="date" stroke="var(--muted)" />
+                <YAxis stroke="var(--muted)" />
                 <Tooltip />
                 <Line type="monotone" dataKey="completed" stroke="#34d399" />
                 <Line type="monotone" dataKey="failed" stroke="#fb7185" />
@@ -108,9 +108,9 @@ export default function DashboardPage() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.charts.volumeByPanel}>
-                <CartesianGrid stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="name" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
+                <CartesianGrid stroke="var(--grid)" />
+                <XAxis dataKey="name" stroke="var(--muted)" />
+                <YAxis stroke="var(--muted)" />
                 <Tooltip />
                 <Bar dataKey="completed" fill="#34d399" radius={[8, 8, 0, 0]} />
               </BarChart>

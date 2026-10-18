@@ -2,6 +2,8 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { PageHeader } from "@/components/page-header";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "@/components/theme-provider";
 import { api } from "@/lib/client";
 
 type Settings = {
@@ -20,6 +22,7 @@ export default function SettingsPage() {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [adminForm, setAdminForm] = useState({ email: "", name: "", password: "", role: "OPERATOR" });
   const [message, setMessage] = useState("");
+  const { theme } = useTheme();
 
   useEffect(() => {
     void api<{ settings: Settings }>("/api/settings").then((payload) => setSettings(payload.settings));
@@ -58,6 +61,15 @@ export default function SettingsPage() {
         title="Settings"
         description="High-value batches can require a second administrator. API credentials stay encrypted and server-side only."
       />
+      <div className="card mb-6 flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="font-medium">Appearance</h3>
+          <p className="muted mt-1">
+            {theme === "dark" ? "Night mode is on. Switch to a light workspace." : "Day mode is on. Switch to a dark workspace."}
+          </p>
+        </div>
+        <ThemeToggle />
+      </div>
       <form className="card grid gap-4 p-5 md:grid-cols-2" onSubmit={(event) => void save(event)}>
         <label className="flex items-center gap-2 text-sm md:col-span-2">
           <input

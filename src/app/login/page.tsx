@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function LoginForm() {
   const router = useRouter();
@@ -32,7 +32,10 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
+    <div className="relative flex min-h-screen items-center justify-center p-6">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle compact />
+      </div>
       <form onSubmit={(event) => void onSubmit(event)} className="card w-full max-w-md p-8">
         <p className="text-[11px] uppercase tracking-[0.24em] text-mint-400">Panel Treasury</p>
         <h1 className="mt-2 text-2xl font-semibold">Administrator sign in</h1>
