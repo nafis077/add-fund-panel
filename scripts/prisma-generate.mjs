@@ -6,6 +6,7 @@ import { applyDatabaseEnv, assertSchemaExists } from "./prisma-env.mjs";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+process.env.PRISMA_HIDE_UPDATE_MESSAGE = "1";
 applyDatabaseEnv(process.env, { createFallback: false });
 
 if (!existsSync(path.join(root, "scripts/prisma-env.mjs"))) {

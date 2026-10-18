@@ -23,8 +23,8 @@
     "postinstall": "node scripts/prisma-generate.mjs"
   },
   "dependencies": {
-    "@prisma/client": "^6.7.0",
-    "prisma": "^6.7.0",
+    "@prisma/client": "6.19.3",
+    "prisma": "6.19.3",
     "bcryptjs": "^3.0.2",
     "decimal.js": "^10.5.0",
     "jose": "^6.0.11",

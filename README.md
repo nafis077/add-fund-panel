@@ -133,4 +133,6 @@ If a custom domain or extra proxy sits in front of Railway and mutations return 
 
 The first boot runs `prisma migrate deploy` and creates the admin user only if that email does not already exist. Later deploys will not reset the password.
 
+Prisma stays on **6.19.3**. Do not run `npm i prisma@latest` — current `latest` is Prisma 8 RC and is a breaking upgrade.
+
 If a Railway **Build image** step fails, check that the service builder is Nixpacks (this repo sets `builder = "NIXPACKS"`) and that install is not omitting devDependencies. The build needs TypeScript and Tailwind from `devDependencies`.
