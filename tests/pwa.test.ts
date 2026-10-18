@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isIosDevice, isIosSafari, isStandaloneDisplay, shouldPromptIosInstall, themeColorFor } from "@/lib/pwa";
+import { biometricLabel, isIosDevice, isIosSafari, isStandaloneDisplay, shouldPromptIosInstall, themeColorFor } from "@/lib/pwa";
 import { isPublicPath } from "@/lib/public-paths";
 
 describe("pwa install helpers", () => {
@@ -25,6 +25,7 @@ describe("pwa install helpers", () => {
       }),
     ).toBe(false);
     expect(themeColorFor("dark")).toBe("#070b14");
+    expect(biometricLabel("Mozilla/5.0 (iPhone)")).toBe("Unlock with Face ID");
   });
 
   it("lets iPhone fetch the PWA files without a session", () => {

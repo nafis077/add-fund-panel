@@ -1,9 +1,11 @@
 "use client";
 
-import { FormEvent, Suspense, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { InstallAppPrompt } from "@/components/install-app-prompt";
+import { PersistenceWarning } from "@/components/persistence-warning";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { biometricLabel, faceIdStatus, markUnlocked, unlockWithFaceId } from "@/lib/face-id";
 
 function LoginForm() {
   const params = useSearchParams();
@@ -11,6 +13,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [faceIdEnabled, setFaceIdEnabled] = useState(false);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -28,7 +31,26 @@ function LoginForm() {
       setError(payload.error ?? "Unable to sign in");
       return;
     }
+    markUnlocked();
     window.location.assign(params.get("next") || "/");
+  }
+
+  useEffect(() => {
+    void faceIdStatus()
+      .then((status) => setFaceIdEnabled(status.enabled))
+      .catch(() => undefined);
+  }, []);
+
+  async function unlockFaceId() {
+    setBusy(true);
+    setError("");
+    try {
+      await unlockWithFaceId();
+      window.location.assign(params.get("next") || "/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Face ID unlock failed");
+      setBusy(false);
+    }
   }
 
   return (
@@ -58,7 +80,18 @@ function LoginForm() {
           <button className="btn-primary mt-6 w-full" disabled={busy}>
             {busy ? "Signing in…" : "Sign in"}
           </button>
+          {faceIdEnabled ? (
+            <button
+              type="button"
+              className="btn-secondary mt-2 w-full"
+              disabled={busy}
+              onClick={() => void unlockFaceId()}
+            >
+              {busy ? "Waiting for Face ID…" : biometricLabel()}
+            </button>
+          ) : null}
         </form>
+        <PersistenceWarning />
         <InstallAppPrompt />
       </div>
     </div>

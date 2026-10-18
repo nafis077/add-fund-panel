@@ -18,10 +18,15 @@ const port = env.PORT || "3000";
 const schema = assertSchemaExists(env);
 
 if (isPostgresUrl(env.DATABASE_URL)) {
-  console.log("[boot] Using PostgreSQL");
+  console.log("[boot] Using PostgreSQL. Existing panel data will be kept.");
 } else {
   console.log("[boot] No PostgreSQL DATABASE_URL. Using SQLite so the service can start.");
-  console.log("[boot] Add a Railway Postgres plugin, then reference DATABASE_URL on this service to keep data across deploys.");
+  if (env.RAILWAY_ENVIRONMENT && !env.RAILWAY_VOLUME_MOUNT_PATH) {
+    console.error("[boot] WARNING: SQLite on Railway without a volume. Every deploy wipes panels and other data.");
+    console.error("[boot] Add a Postgres plugin and attach DATABASE_URL to this web service. Do not reset or recreate the database.");
+  } else {
+    console.log("[boot] Add a Railway Postgres plugin, then reference DATABASE_URL on this service to keep data across deploys.");
+  }
 }
 
 await run("npx", ["prisma", "generate", "--schema", schema], env);

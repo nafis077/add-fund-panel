@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
+import { FaceLockGate } from "@/components/face-lock-gate";
 import { InstallAppPrompt } from "@/components/install-app-prompt";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
+import { PersistenceWarning } from "@/components/persistence-warning";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -12,6 +14,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session) redirect("/login");
 
   return (
+    <FaceLockGate>
     <div className="app-shell">
       <div className="hidden md:block">
         <Sidebar user={session} />
@@ -25,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <ThemeToggle compact />
         </header>
         <main className="mobile-app-main flex-1 p-4 md:p-8">
+          <PersistenceWarning />
           <div className="mb-4 md:hidden">
             <InstallAppPrompt compact />
           </div>
@@ -33,5 +37,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <MobileTabBar />
       </div>
     </div>
+    </FaceLockGate>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { FaceIdSettings } from "@/components/face-id-settings";
 import { InstallAppPrompt } from "@/components/install-app-prompt";
 import { PageHeader } from "@/components/page-header";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -71,6 +72,7 @@ export default function SettingsPage() {
         </div>
         <ThemeToggle />
       </div>
+      <FaceIdSettings />
       <div className="card mb-6 p-5">
         <h3 className="font-medium">iPhone app shortcut</h3>
         <p className="muted mt-1">
