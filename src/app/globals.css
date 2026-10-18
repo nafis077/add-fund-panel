@@ -152,6 +152,13 @@ button {
   min-width: 0;
 }
 
+@media (min-width: 768px) {
+  .app-top-bar .panel-switcher {
+    max-width: 22rem;
+    justify-self: end;
+  }
+}
+
 @media (max-width: 767px) {
   .app-top-bar {
     grid-template-columns: minmax(0, 1fr) auto;

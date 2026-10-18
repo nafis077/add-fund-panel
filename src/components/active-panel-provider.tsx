@@ -8,6 +8,7 @@ type ActivePanelContextValue = {
   panels: SwitchablePanel[];
   activePanelId: string;
   activePanel: SwitchablePanel | null;
+  ready: boolean;
   setActivePanelId: (id: string) => void;
 };
 
@@ -16,6 +17,7 @@ const ActivePanelContext = createContext<ActivePanelContextValue | null>(null);
 export function ActivePanelProvider({ children }: { children: React.ReactNode }) {
   const [panels, setPanels] = useState<SwitchablePanel[]>([]);
   const [activePanelId, setActivePanelIdState] = useState("");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     void api<{ panels: SwitchablePanel[] }>("/api/panels")
@@ -25,7 +27,8 @@ export function ActivePanelProvider({ children }: { children: React.ReactNode })
         setActivePanelIdState(next);
         if (next) persistPanelId(next);
       })
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setReady(true));
   }, []);
 
   const value = useMemo<ActivePanelContextValue>(
@@ -33,12 +36,13 @@ export function ActivePanelProvider({ children }: { children: React.ReactNode })
       panels,
       activePanelId,
       activePanel: panels.find((panel) => panel.id === activePanelId) ?? null,
+      ready,
       setActivePanelId: (id) => {
         setActivePanelIdState(id);
         persistPanelId(id);
       },
     }),
-    [panels, activePanelId],
+    [panels, activePanelId, ready],
   );
 
   return <ActivePanelContext.Provider value={value}>{children}</ActivePanelContext.Provider>;

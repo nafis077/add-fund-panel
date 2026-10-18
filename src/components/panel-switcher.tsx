@@ -4,9 +4,13 @@ import { ChevronDown } from "lucide-react";
 import { useActivePanel } from "@/components/active-panel-provider";
 
 export function PanelSwitcher({ compact = false }: { compact?: boolean }) {
-  const { panels, activePanelId, activePanel, setActivePanelId } = useActivePanel();
+  const { panels, activePanelId, activePanel, ready, setActivePanelId } = useActivePanel();
   const usable = panels.filter((panel) => panel.isActive);
   const options = usable.length ? usable : panels;
+
+  if (!ready) {
+    return <p className="muted text-sm">Loading panels…</p>;
+  }
 
   if (options.length === 0) {
     return <p className="muted text-sm">No panels yet</p>;
