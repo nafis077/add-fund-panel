@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const LINKS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -58,6 +59,9 @@ export function Sidebar({ user }: { user: { name: string; role: string } }) {
           );
         })}
       </nav>
+      <div className="mb-3">
+        <ThemeToggle className="btn-secondary w-full" />
+      </div>
       <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
         <p className="text-sm font-medium">{user.name}</p>
         <p className="muted">{user.role.replaceAll("_", " ")}</p>
